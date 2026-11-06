@@ -17,6 +17,7 @@ namespace omm::abi {
 
 enum class HandleKind : uint8_t {
     runtime = 1,
+    asset = 2,
 };
 
 template <typename Object>

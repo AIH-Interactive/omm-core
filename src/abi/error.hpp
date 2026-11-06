@@ -4,7 +4,9 @@
 #include <cstdint>
 #include <exception>
 #include <new>
+#include <string>
 #include <string_view>
+#include <utility>
 
 #include "omm/omm.h"
 
@@ -13,9 +15,9 @@ namespace omm::abi {
 // Thrown inside the library; converted to omm_status at the C boundary.
 class Failure {
 public:
-    Failure(omm_status code, uint32_t stage, std::string_view message,
-            uint64_t source_offset = OMM_OFFSET_UNKNOWN) noexcept
-        : code_(code), stage_(stage), message_(message), source_offset_(source_offset) {}
+    Failure(omm_status code, uint32_t stage, std::string message,
+            uint64_t source_offset = OMM_OFFSET_UNKNOWN)
+        : code_(code), stage_(stage), message_(std::move(message)), source_offset_(source_offset) {}
 
     omm_status code() const noexcept { return code_; }
     uint32_t stage() const noexcept { return stage_; }
@@ -25,8 +27,7 @@ public:
 private:
     omm_status code_;
     uint32_t stage_;
-    // Messages are string literals or otherwise outlive the throw.
-    std::string_view message_;
+    std::string message_;
     uint64_t source_offset_;
 };
 

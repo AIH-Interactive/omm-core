@@ -1,0 +1,2 @@
+# Vendored files are pinned by byte-level SHA-256. Preserve upstream bytes and whitespace.
+third_party/** -text whitespace=-blank-at-eol

@@ -16,11 +16,10 @@ namespace omm::abi {
 
 namespace {
 
-constexpr uint32_t kMaxWorkers = 64;
-constexpr uint32_t kDefaultWorkerCap = 8;
 constexpr uint64_t kDefaultMemoryBudget = 1024ull * 1024ull * 1024ull;  // 1 GiB
-constexpr uint64_t kDefaultMaxFileBytes = 256ull * 1024ull * 1024ull;   // 256 MiB
-constexpr uint64_t kDefaultMaxTotalBytes = 512ull * 1024ull * 1024ull;  // 512 MiB
+// Parser defaults match OMP YsmResourceLimits.DEFAULT (M0 contract): 64 MiB source, 256 MiB expanded.
+constexpr uint64_t kDefaultMaxFileBytes = 64ull * 1024ull * 1024ull;    // 64 MiB
+constexpr uint64_t kDefaultMaxTotalBytes = 256ull * 1024ull * 1024ull;  // 256 MiB
 
 // Output structs: the caller declares its size; v1 layouts must be complete.
 template <typename Struct>
@@ -38,7 +37,7 @@ uint32_t default_worker_count() noexcept {
     if (hardware == 0u) {
         return 1u;
     }
-    return std::min<uint32_t>(static_cast<uint32_t>(hardware), kDefaultWorkerCap);
+    return static_cast<uint32_t>(hardware);
 }
 
 }  // namespace
@@ -97,9 +96,6 @@ OMM_API omm_status OMM_CALL omm_runtime_create(const omm_runtime_desc *desc,
         if (desc->cpu_mode > omm_cpu_neon) {
             throw Failure(omm_error_argument, omm_stage_runtime, "cpu_mode is not a known omm_cpu value");
         }
-        if (desc->worker_count > omm::abi::kMaxWorkers) {
-            throw Failure(omm_error_argument, omm_stage_runtime, "worker_count exceeds the supported maximum");
-        }
 
         auto runtime = std::make_shared<omm::abi::Runtime>();
         runtime->available_kernels = omm::abi::available_cpu_kernels();
@@ -135,8 +131,10 @@ OMM_API omm_status OMM_CALL omm_runtime_get_caps(omm_handle runtime_handle,
         out_caps->version = OMM_RUNTIME_CAPS_VERSION;
         out_caps->cpu_kernels = runtime->available_kernels;
         out_caps->active_kernel = runtime->active_kernel;
-        // No parser formats are compiled in before M2.
-        out_caps->parser_formats = 0u;
+        // ysmparser formats compiled into this build (M2).
+        out_caps->parser_formats = (1u << omm_ysm_raw) | (1u << omm_ysm_zip) | (1u << omm_ysm_legacy_v1) |
+                                   (1u << omm_ysm_legacy_v2) | (1u << omm_ysm_legacy_v3) |
+                                   (1u << omm_ysm_asset_container);
         out_caps->worker_count = runtime->worker_count;
         out_caps->abi_major = OMM_ABI_MAJOR;
         out_caps->abi_minor = OMM_ABI_MINOR;

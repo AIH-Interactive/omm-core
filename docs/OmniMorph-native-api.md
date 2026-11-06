@@ -78,12 +78,16 @@ omm_status omm_runtime_destroy(omm_handle runtime, omm_error *error);
 | 结构 | 必需字段与语义 |
 |---|---|
 | `omm_version` | struct_size/version、abi_major/minor、asset_schema、mesh_schema、cache_version、构建 ID 的定长 UTF-8 字段 |
-| `omm_runtime_desc` | ABI 请求、cpu_mode、worker_count、总 CPU 内存预算、解析默认限额；worker_count=0 为库选择的有界默认 |
+| `omm_runtime_desc` | ABI 请求、cpu_mode、worker_count、总 CPU 内存预算、解析默认限额；worker_count=0 按可用逻辑核心数一核一个执行线程，含调用线程；1 为串行，非零值显式指定总执行线程数 |
 | `omm_runtime_caps` | CPU 可用 kernel 位图、实际 kernel、已编译 parser 格式位图、运行时版本；不在未附着 device 时报告 GPU 可用 |
 
 CPU 枚举：`omm_cpu_auto=0`、`omm_cpu_scalar=1`、`omm_cpu_sse2=2`、`omm_cpu_avx2=3`、`omm_cpu_neon=4`。显式指定不可用 kernel 返回 unsupported，不能悄悄降级导致测试误判。auto 按已核验 CPU/OS 能力选择。
 
 运行时退出前必须释放所有子句柄；仍有活动子对象返回 state，不强制释放调用方仍在使用的资源。不同 runtime 的句柄不能混用。
+
+`worker_count` 表示每次同步 CPU 操作的总执行线程上限，调用线程也计入；独立任务少于线程数时只启动实际需要的线程，不创建空闲线程。M2 对单个模型内部的动画/controller 资源及动画文件内独立 clip 并行解析，再按输入顺序合并，不改变事件、诊断或资源序号；文件与 clip 两层共享该线程上限。调用方同时发起多个同步操作时，每个操作分别遵守此上限。
+
+CPU 内存预算用于同一 runtime 的资产及 section 缓存累计容量核算：包含资源、规范化模型、字符串及容器容量，索引按保守开销计入；超限返回 `omm_error_limit`，失败不发布资产，release 归还计数。解码输入/展开限额同时不得超过该预算。`omm_asset_info.retained_bytes` 返回该资产当前核算容量（含已缓存 section）；这是库拥有数据的容量核算，不是进程 RSS 或分配器元数据/临时峰值的硬限制。
 
 ## 4. ysmparser API
 
@@ -116,9 +120,15 @@ omm_status omm_asset_release(omm_handle asset, omm_error *error);
 
 source_profile 区分 `omm_profile_omp_compat` 与 `omm_profile_ysm_current`。同样字段在两个来源中有不同默认值时不能混用；不支持的组合返回 unsupported。
 
+M2 中 0 按格式选择来源：raw/ZIP/YSGP 使用 OMP 兼容语义；当前 Asset Container 使用 YSM 语义。显式 `omm_profile_ysm_current` 只接收当前容器，显式 OMP profile 不接收它。当前支持容器版本 `0.1.0-unstable`、`mixel/character` schema `0.1.1-unstable`；校验 BLAKE3 头/块摘要并支持 raw/zstd 块。ED25519 和其他模型 schema 返回 unsupported。
+
+当前 protobuf 时间以 tick 编码，输出统一转为秒；几何直接生成与既有 asset 相同的 quad 数据。Portable Program 以 `program: {format, source}` 或 `program: {format, bytecode_hex}` 交给宿主。存在 program 时不得把 component 的数值 fallback 当作表达式结果；native 不解释或执行字节码。原始 manifest/definition/blob 块保留为资源，metadata 的 manifest_resource 和身份字段指向其来源。
+
 `omm_asset_info` 返回来源格式/版本、target/geometry/bone/animation/resource 数量、retained bytes 和 schema 版本。asset 内部结构不暴露；`omm_model_create_from_asset` 直接消费其几何，省去反序列化到 Java。
 
 `omm_asset_read_section` 的 section 包括 `omm_section_metadata`、`omm_section_animations`、`omm_section_controllers`、`omm_section_expressions`、`omm_section_resources`、`omm_section_diagnostics`。M2 输出 schema v1 的 UTF-8 JSON，正式 JSON Schema 随 SDK 发布：
+
+定义见 [`schemas/asset-section-v1.schema.json`](../schemas/asset-section-v1.schema.json)，安装于 `share/omm_core/schemas/`。
 
 - 每节有 schema_version 和数组 records；所有引用用稳定的 asset 内 uint32 ID，不用内存地址。
 - 动画：名称、length 及“未声明/无界”标记、loop、bone/channel、时间、pre/post、插值、blend weight、同时间事件的 ordinal；不把无界编码成非法 JSON Infinity。

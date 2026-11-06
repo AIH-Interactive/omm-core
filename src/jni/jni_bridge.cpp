@@ -7,6 +7,8 @@
 
 #include <cstdint>
 #include <cstring>
+#include <string>
+#include <vector>
 
 #include "omm/omm.h"
 
@@ -149,6 +151,241 @@ void JNICALL omm_runtime_destroy_jni(JNIEnv *env, jclass, jlong runtime) {
     check(env, omm_runtime_destroy(static_cast<omm_handle>(runtime), &error), error);
 }
 
+// ---- ysmparser (ABI 0.2) ----
+
+// Resolves a DirectByteBuffer window [offset, offset + length) without moving its position.
+bool direct_window(JNIEnv *env, jobject buffer, jint offset, jint length, uint8_t *&out_data) {
+    if (buffer == nullptr || offset < 0 || length < 0) {
+        throw_native(env, omm_error_argument, omm_stage_jni, "buffer is null or offset/length is negative");
+        return false;
+    }
+    void *address = env->GetDirectBufferAddress(buffer);
+    const jlong capacity = env->GetDirectBufferCapacity(buffer);
+    if (address == nullptr || capacity < 0) {
+        throw_native(env, omm_error_argument, omm_stage_jni, "buffer is not a direct ByteBuffer");
+        return false;
+    }
+    if (static_cast<jlong>(offset) + static_cast<jlong>(length) > capacity) {
+        throw_native(env, omm_error_argument, omm_stage_jni, "offset + length exceeds the buffer capacity");
+        return false;
+    }
+    out_data = static_cast<uint8_t *>(address) + offset;
+    return true;
+}
+
+omm_ysm_parse_desc parse_desc(const std::string &display_name) {
+    omm_ysm_parse_desc desc;
+    std::memset(&desc, 0, sizeof(desc));
+    desc.struct_size = sizeof(desc);
+    desc.version = OMM_YSM_PARSE_DESC_VERSION;
+    desc.display_name.data = reinterpret_cast<const uint8_t *>(display_name.data());
+    desc.display_name.size = display_name.size();
+    return desc;
+}
+
+// Modified UTF-8 from JNI is converted through Java's own String.getBytes(UTF_8).
+bool utf8_of(JNIEnv *env, jstring text, std::string &out) {
+    out.clear();
+    if (text == nullptr) {
+        return true;
+    }
+    jclass string_class = env->GetObjectClass(text);
+    jmethodID get_bytes = env->GetMethodID(string_class, "getBytes", "(Ljava/lang/String;)[B");
+    jstring charset = env->NewStringUTF("UTF-8");
+    if (get_bytes == nullptr || charset == nullptr) {
+        return false;
+    }
+    auto bytes = static_cast<jbyteArray>(env->CallObjectMethod(text, get_bytes, charset));
+    env->DeleteLocalRef(charset);
+    env->DeleteLocalRef(string_class);
+    if (env->ExceptionCheck() || bytes == nullptr) {
+        return false;
+    }
+    const jsize length = env->GetArrayLength(bytes);
+    out.resize(static_cast<size_t>(length));
+    env->GetByteArrayRegion(bytes, 0, length, reinterpret_cast<jbyte *>(out.data()));
+    env->DeleteLocalRef(bytes);
+    return true;
+}
+
+// int[] {format, source_version, parseable}; an unknown format is not an exception here.
+jintArray JNICALL omm_ysm_probe_jni(JNIEnv *env, jclass, jobject input, jint offset, jint length) {
+    uint8_t *data = nullptr;
+    if (!direct_window(env, input, offset, length, data)) {
+        return nullptr;
+    }
+    omm_error error = make_error();
+    omm_ysm_probe_result result;
+    std::memset(&result, 0, sizeof(result));
+    result.struct_size = sizeof(result);
+    const omm_status status = omm_ysm_probe(omm_bytes{data, static_cast<uint64_t>(length)}, &result, &error);
+    if (status != omm_ok && status != omm_error_unsupported) {
+        check(env, status, error);
+        return nullptr;
+    }
+    const jint values[] = {
+        static_cast<jint>(result.format),
+        static_cast<jint>(result.source_version),
+        static_cast<jint>(result.parseable),
+    };
+    return new_int_array(env, values, 3);
+}
+
+jlong JNICALL omm_ysm_parse_jni(JNIEnv *env, jclass, jlong runtime, jobject input, jint offset, jint length,
+                                jstring display_name) {
+    uint8_t *data = nullptr;
+    std::string name;
+    if (!direct_window(env, input, offset, length, data) || !utf8_of(env, display_name, name)) {
+        return 0;
+    }
+    const omm_ysm_parse_desc desc = parse_desc(name);
+    omm_error error = make_error();
+    omm_handle asset = 0;
+    if (!check(env, omm_ysm_parse(static_cast<omm_handle>(runtime), omm_bytes{data, static_cast<uint64_t>(length)},
+                                  &desc, &asset, &error),
+               error)) {
+        return 0;
+    }
+    return static_cast<jlong>(asset);
+}
+
+// Raw directory: parallel arrays of UTF-8 relative paths and direct buffers (position..limit).
+jlong JNICALL omm_ysm_parse_entries_jni(JNIEnv *env, jclass, jlong runtime, jobjectArray paths, jobjectArray buffers,
+                                        jstring display_name) {
+    if (paths == nullptr || buffers == nullptr || env->GetArrayLength(paths) != env->GetArrayLength(buffers)) {
+        throw_native(env, omm_error_argument, omm_stage_jni, "paths and buffers must be non-null and equally long");
+        return 0;
+    }
+    std::string name;
+    if (!utf8_of(env, display_name, name)) {
+        return 0;
+    }
+    const jsize count = env->GetArrayLength(paths);
+    std::vector<std::string> path_storage(static_cast<size_t>(count));
+    std::vector<omm_ysm_entry> entries(static_cast<size_t>(count));
+    jclass buffer_class = env->FindClass("java/nio/Buffer");
+    jmethodID position = env->GetMethodID(buffer_class, "position", "()I");
+    jmethodID limit = env->GetMethodID(buffer_class, "limit", "()I");
+    for (jsize index = 0; index < count; ++index) {
+        auto path = static_cast<jstring>(env->GetObjectArrayElement(paths, index));
+        jobject buffer = env->GetObjectArrayElement(buffers, index);
+        if (path == nullptr || buffer == nullptr) {
+            throw_native(env, omm_error_argument, omm_stage_jni, "null path or buffer entry");
+            return 0;
+        }
+        const jint start = env->CallIntMethod(buffer, position);
+        const jint end = env->CallIntMethod(buffer, limit);
+        uint8_t *data = nullptr;
+        if (!utf8_of(env, path, path_storage[static_cast<size_t>(index)]) ||
+            !direct_window(env, buffer, start, end - start, data)) {
+            return 0;
+        }
+        const std::string &stored = path_storage[static_cast<size_t>(index)];
+        entries[static_cast<size_t>(index)] = omm_ysm_entry{
+            omm_bytes{reinterpret_cast<const uint8_t *>(stored.data()), stored.size()},
+            omm_bytes{data, static_cast<uint64_t>(end - start)}};
+        env->DeleteLocalRef(path);
+        env->DeleteLocalRef(buffer);
+    }
+    env->DeleteLocalRef(buffer_class);
+    const omm_ysm_parse_desc desc = parse_desc(name);
+    omm_error error = make_error();
+    omm_handle asset = 0;
+    if (!check(env, omm_ysm_parse_entries(static_cast<omm_handle>(runtime), entries.data(),
+                                          static_cast<uint32_t>(entries.size()), &desc, &asset, &error),
+               error)) {
+        return 0;
+    }
+    return static_cast<jlong>(asset);
+}
+
+// long[] {format, version, schema, geometries, bones, quads, animation files, clips, controllers,
+//         resources, diagnostics, retained bytes}
+jlongArray JNICALL omm_asset_get_info_jni(JNIEnv *env, jclass, jlong asset) {
+    omm_error error = make_error();
+    omm_asset_info info;
+    std::memset(&info, 0, sizeof(info));
+    info.struct_size = sizeof(info);
+    if (!check(env, omm_asset_get_info(static_cast<omm_handle>(asset), &info, &error), error)) {
+        return nullptr;
+    }
+    const jlong values[] = {
+        info.source_format,  info.source_version, info.asset_schema,     info.geometry_count,
+        info.bone_count,     info.quad_count,     info.animation_file_count, info.clip_count,
+        info.controller_count, info.resource_count, info.diagnostic_count,
+        static_cast<jlong>(info.retained_bytes),
+    };
+    jlongArray array = env->NewLongArray(12);
+    if (array != nullptr) {
+        env->SetLongArrayRegion(array, 0, 12, values);
+    }
+    return array;
+}
+
+// UTF-8 JSON bytes of one section; one native → Java copy.
+jbyteArray JNICALL omm_asset_read_section_jni(JNIEnv *env, jclass, jlong asset, jint section) {
+    if (section < 0) {
+        throw_native(env, omm_error_argument, omm_stage_jni, "section is negative");
+        return nullptr;
+    }
+    omm_error error = make_error();
+    uint64_t required = 0;
+    if (!check(env, omm_asset_read_section(static_cast<omm_handle>(asset), static_cast<uint32_t>(section),
+                                           omm_mut_bytes{nullptr, 0}, &required, &error),
+               error)) {
+        return nullptr;
+    }
+    if (required > 0x7FFFFFFFull) {
+        throw_native(env, omm_error_limit, omm_stage_jni, "section exceeds the Java array limit");
+        return nullptr;
+    }
+    jbyteArray array = env->NewByteArray(static_cast<jsize>(required));
+    if (array == nullptr) {
+        return nullptr;
+    }
+    // Copy through the critical region only for the memcpy; no native work runs inside it.
+    void *target = env->GetPrimitiveArrayCritical(array, nullptr);
+    if (target == nullptr) {
+        return nullptr;
+    }
+    const omm_status status = omm_asset_read_section(static_cast<omm_handle>(asset), static_cast<uint32_t>(section),
+                                                     omm_mut_bytes{static_cast<uint8_t *>(target), required},
+                                                     &required, &error);
+    env->ReleasePrimitiveArrayCritical(array, target, 0);
+    if (!check(env, status, error)) {
+        return nullptr;
+    }
+    return array;
+}
+
+// Copies resource bytes into a direct buffer window; returns bytes written (0 at EOF).
+jint JNICALL omm_asset_read_resource_jni(JNIEnv *env, jclass, jlong asset, jint resource, jlong offset,
+                                         jobject output, jint output_offset, jint output_length) {
+    if (resource < 0 || offset < 0) {
+        throw_native(env, omm_error_argument, omm_stage_jni, "resource or offset is negative");
+        return 0;
+    }
+    uint8_t *data = nullptr;
+    if (!direct_window(env, output, output_offset, output_length, data)) {
+        return 0;
+    }
+    omm_error error = make_error();
+    uint64_t written = 0;
+    if (!check(env, omm_asset_read_resource(static_cast<omm_handle>(asset), static_cast<uint32_t>(resource),
+                                            static_cast<uint64_t>(offset),
+                                            omm_mut_bytes{data, static_cast<uint64_t>(output_length)}, &written,
+                                            &error),
+               error)) {
+        return 0;
+    }
+    return static_cast<jint>(written);
+}
+
+void JNICALL omm_asset_release_jni(JNIEnv *env, jclass, jlong asset) {
+    omm_error error = make_error();
+    check(env, omm_asset_release(static_cast<omm_handle>(asset), &error), error);
+}
+
 // The base registration set; its names and signatures are permanently stable (API section 10).
 const JNINativeMethod kBaseMethods[] = {
     {const_cast<char *>("omm_get_version"), const_cast<char *>("()[I"),
@@ -161,6 +398,26 @@ const JNINativeMethod kBaseMethods[] = {
      reinterpret_cast<void *>(&omm_runtime_get_caps_jni)},
     {const_cast<char *>("omm_runtime_destroy"), const_cast<char *>("(J)V"),
      reinterpret_cast<void *>(&omm_runtime_destroy_jni)},
+};
+
+// Optional sets are registered one method at a time: an older bridge class that does not
+// declare a method simply does not get it, and the library still loads (API section 10).
+const JNINativeMethod kParserMethods[] = {
+    {const_cast<char *>("omm_ysm_probe"), const_cast<char *>("(Ljava/nio/ByteBuffer;II)[I"),
+     reinterpret_cast<void *>(&omm_ysm_probe_jni)},
+    {const_cast<char *>("omm_ysm_parse"), const_cast<char *>("(JLjava/nio/ByteBuffer;IILjava/lang/String;)J"),
+     reinterpret_cast<void *>(&omm_ysm_parse_jni)},
+    {const_cast<char *>("omm_ysm_parse_entries"),
+     const_cast<char *>("(J[Ljava/lang/String;[Ljava/nio/ByteBuffer;Ljava/lang/String;)J"),
+     reinterpret_cast<void *>(&omm_ysm_parse_entries_jni)},
+    {const_cast<char *>("omm_asset_get_info"), const_cast<char *>("(J)[J"),
+     reinterpret_cast<void *>(&omm_asset_get_info_jni)},
+    {const_cast<char *>("omm_asset_read_section"), const_cast<char *>("(JI)[B"),
+     reinterpret_cast<void *>(&omm_asset_read_section_jni)},
+    {const_cast<char *>("omm_asset_read_resource"), const_cast<char *>("(JIJLjava/nio/ByteBuffer;II)I"),
+     reinterpret_cast<void *>(&omm_asset_read_resource_jni)},
+    {const_cast<char *>("omm_asset_release"), const_cast<char *>("(J)V"),
+     reinterpret_cast<void *>(&omm_asset_release_jni)},
 };
 
 }  // namespace
@@ -187,10 +444,15 @@ extern "C" JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void *) {
         return JNI_ERR;
     }
     const auto count = static_cast<jint>(sizeof(kBaseMethods) / sizeof(kBaseMethods[0]));
-    const jint registered = env->RegisterNatives(api_class, kBaseMethods, count);
-    env->DeleteLocalRef(api_class);
-    if (registered != JNI_OK) {
+    if (env->RegisterNatives(api_class, kBaseMethods, count) != JNI_OK) {
+        env->DeleteLocalRef(api_class);
         return JNI_ERR;
     }
+    for (const JNINativeMethod &method : kParserMethods) {
+        if (env->RegisterNatives(api_class, &method, 1) != JNI_OK) {
+            env->ExceptionClear();  // NoSuchMethodError: this bridge predates the method
+        }
+    }
+    env->DeleteLocalRef(api_class);
     return JNI_VERSION_1_8;
 }

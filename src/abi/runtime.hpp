@@ -16,6 +16,7 @@ struct Runtime {
     uint64_t cpu_memory_budget = 0;
     uint64_t parse_max_file_bytes = 0;
     uint64_t parse_max_total_bytes = 0;
+    std::atomic<uint64_t> retained_cpu_bytes{0};
     // Live child objects (assets, models, devices ...); destroy fails with omm_error_state while > 0.
     std::atomic<uint64_t> live_children{0};
 };

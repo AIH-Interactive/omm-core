@@ -1,6 +1,6 @@
 # OmniMorph 纯 native 渲染与解析库实现计划
 
-日期：2026-11-06。状态：设计交付，尚未开始 native 实施。
+日期：2026-11-06；进度更新：2026-11-07。状态：M0/M1 已完成；M2 实施与自动验收完成，Git 检查点收尾中，阶段记录见第 10 节。
 
 ## 1. 目标与范围
 
@@ -14,7 +14,7 @@ SIMD 与 GPU **同时属于必需交付**，不能只交付其中之一：
 - GPU：静态几何常驻、姿态增量上传、native shader/pipeline 管理、索引绘制与批次合并。SIMD 可先准备姿态，GPU 再执行顶点变换，两者协同。
 - Native CPU 模式仍由 native 上传并 draw，不通过 Java 逐顶点提交。compute/SSBO 是后续同一阶段内的能力增强，不是四平台基础功能的前提。
 
-本次仅交付计划、API 设计和手动 CI 配置；不修改 `refs`、不实现 native、不启动游戏。后续本地只编译/测试 Windows；Linux、Android、macOS 通过 GitHub Actions 编译。各平台真实运行结果独立记录。
+初始设计交付包含计划、API 设计和手动 CI 配置；当前实施按第 8 节推进，参考目录 `refs` 保持不变，不启动游戏。本地只编译/测试 Windows；Linux、Android、macOS 通过 GitHub Actions 编译。各平台真实运行结果独立记录。
 
 ## 2. 参考证据与复用边界
 
@@ -161,7 +161,7 @@ CI 配置见 [`../.github/workflows/native-manual.yml`](../.github/workflows/nat
 
 ## 8. 有序实施里程碑
 
-以下是未来实施计划，不是本次已完成阶段。
+以下定义各阶段范围和退出条件；实际完成状态见第 10 节。
 
 | 阶段 | 实施内容 | 自动验收与退出条件 |
 |---|---|---|
@@ -193,8 +193,8 @@ CI 配置见 [`../.github/workflows/native-manual.yml`](../.github/workflows/nat
 
 ## 10. 当前状态与实施入口
 
-进度：M0 已完成，见 [M0 证据与契约](m0/M0-contract.md)；M1 已完成，见 [M1 构建与 ABI](m1/M1-build-abi.md)。
+进度：M0 已完成，见 [M0 证据与契约](m0/M0-contract.md)；M1 已完成，见 [M1 构建与 ABI](m1/M1-build-abi.md)；M2 解析器实施与自动验收完成，正在完成提交检查点，见 [M2 native ysmparser](m2/M2-ysmparser.md)。
 
-本次已形成设计：双引擎、SIMD+GPU、native ysmparser、跨版本 ABI、平台矩阵和手动 CI。尚无 native 源码、编译结果、性能倍率或真实窗口 PASS。下一项是 M0 的互操作与格式契约核实，然后按 M1–M6 实施；不得直接跨过 API/语义确认开始大规模替换渲染器。
+当前已有 Windows native ABI/JNI 与解析器及本地验证；M3–M6 尚未实施，尚无 native 渲染或真实游戏性能结论。M2 检查点提交推送成功后才进入 M3。
 
 外部构建依据：GitHub 的 [手动 workflow 说明](https://docs.github.com/en/actions/how-tos/manage-workflow-runs/manually-run-a-workflow?tool=webui)；Android 的 [16 KB 页支持](https://developer.android.com/guide/practices/page-sizes)（r28+ 默认 16 KB 对齐，仍检查最终 ELF）；GLFW 的 [平台上下文约束](https://www.glfw.org/docs/latest/compat_guide.html)。手动入口需 workflow 存在于默认分支；本次不触发远程构建。

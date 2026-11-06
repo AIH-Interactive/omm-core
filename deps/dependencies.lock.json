@@ -1,12 +1,109 @@
 {
     "schema": "omm-dependency-lock/1",
-    "comment": "Pinned third-party dependencies. M1 links no third-party code; JNI headers come from the build JDK and are not linked.",
-    "libraries": [],
+    "comment": "Pinned vendored decoder/JSON sources; SHA-256 covers every shipped source and license file. JNI headers come from the build JDK.",
+    "libraries": [
+        {
+            "name": "zstd",
+            "version": "1.5.7",
+            "license": "BSD-3-Clause",
+            "upstream": "https://github.com/facebook/zstd/tree/v1.5.7",
+            "path": "third_party/zstd",
+            "treeSha256": "364ae1277665ee2e6b72c7b51d5e3891e5b01b3e10c8c824e6fe470068ace03d",
+            "treeHashRule": "SHA-256 of sorted UTF-8 relative-path TAB file-sha256 LF lines",
+            "files": {
+                "lib/common/allocations.h": "6a718e8edaca112abdc0bdfa7de67edefaa44c8d9e514b79672ab58ab3a9118a",
+                "lib/common/bits.h": "5bb7693a35d7ce03f8715c0b1e237062285e052250fdd34f72f38e7e92365090",
+                "lib/common/bitstream.h": "a9461685c9add6f609078acc950a08db4c02e6e6a849d550f45182ba2ae38556",
+                "lib/common/compiler.h": "d19829705d8039437ffba873df2b58d20d7b876d58da479121d2e515df55cbf7",
+                "lib/common/cpu.h": "23d520b536a6f23114e66549d03a967b1f24b15560c5b1ebd47ee392ccee4a1c",
+                "lib/common/debug.c": "7ab1ea104acf3243fc1cd4e6d2514046f1dfc1101c7c676145c8da080e8c24ca",
+                "lib/common/debug.h": "8260cd5087b8309679c61b772b535688993c61a675a30481b8ae55b45740ba15",
+                "lib/common/entropy_common.c": "7dfce29c6bc807645b1f0c373dad94bbb49603b175a84e72d1739bf9df65feb8",
+                "lib/common/error_private.c": "3f5873b2626ca1cdf554b7ec7b04ea0ef296fd0f6882d7fad42448b7e2dbb41c",
+                "lib/common/error_private.h": "ae077bb433eb150ee247410a0357f910b9c07be839c6a9abe0b2e6b18ceb716d",
+                "lib/common/fse.h": "5235ce1e512bf80204d013b1f4cecd776fdaa9effddb48308bce08f6d0b84499",
+                "lib/common/fse_decompress.c": "84eba7030a036b36363a5108e760428ce549f1a833bec6464dc755f6ed51a6fb",
+                "lib/common/huf.h": "9a83d899c8c9bf03389d482562090ec2443bc0f87f27864a2b891b180333f2d4",
+                "lib/common/mem.h": "4dd5fe76fa30a020cd4b3af3134ae143920300a1fe54baac1a5da73297e66783",
+                "lib/common/portability_macros.h": "75e2b43968b70decc6bd17876833be04894035594ddc1e745cd6b70be8265637",
+                "lib/common/xxhash.c": "8444d064922f434b67b708a987981aa21dfeece735b48c82d31f7027d0ccef03",
+                "lib/common/xxhash.h": "8cb837b21a8fe9a6b9dbcd0961ab16e733bfcbfa9e003f3a496ce07ae80aa8ee",
+                "lib/common/zstd_common.c": "f49eb8023a90d3de925373bd9ee0d36ed46b26c529840b64220397446cd73795",
+                "lib/common/zstd_deps.h": "9c77ea7d0afa8d5c868a7839e178a446a82d88eb75fd56f2fd7d9d96c5ab7c11",
+                "lib/common/zstd_internal.h": "ad3d95ce2b81a8c5c6b00cfe6323d8e80cacb690d3b5883725cd0d939f4f576f",
+                "lib/common/zstd_trace.h": "17f6daa4c7e97055cd1ed7bcf4d9241a4e79b465f083c5d732fda1df2f0be11e",
+                "lib/decompress/huf_decompress.c": "710a88d877d5dc5c83a4f839392996f337ec81cf38006c4a5be6042de5b54828",
+                "lib/decompress/huf_decompress_amd64.S": "7fe53316261517a8f877b793f3bfba8305a3f9ff05c5947f1d709aaff346f1dc",
+                "lib/decompress/zstd_ddict.c": "38bf812283d61f4cd1f6aea30f84b43317418257c4e6fc198b09b436bd484397",
+                "lib/decompress/zstd_ddict.h": "a97a250fd2f956e3ae419ddde68ae1f9fe4025bc0373254058d31bbd352fa71c",
+                "lib/decompress/zstd_decompress.c": "029580818b7e9cd38d9d07c63516b00ceaa943ffcfbd099fc5ccbe3628fa362f",
+                "lib/decompress/zstd_decompress_block.c": "9cb8bcb07aeb87e4717a9c8a86d20832dc525dde2c1b72efdaaab7c937f43b87",
+                "lib/decompress/zstd_decompress_block.h": "62ee0c6ae3f7353020538397f436b59743da8acb922068841b346f480f7078ac",
+                "lib/decompress/zstd_decompress_internal.h": "73217b49a644c0fcf567b70677cae31449ba9f50a235ef3b681001c3f36dc56d",
+                "lib/zstd.h": "9b4bc8245565c98ccfc61c07749928b57e7c0f6fddb0530c4f6aa1971893d88b",
+                "lib/zstd_errors.h": "66a8c3f71d12ea6e797e4f622f31f3f8f81c41b36f48cad4f5de7d8bfb6aac0a",
+                "LICENSE": "7055266497633c9025b777c78eb7235af13922117480ed5c674677adc381c9d8"
+            }
+        },
+        {
+            "name": "miniz",
+            "version": "3.0.2",
+            "license": "MIT",
+            "upstream": "https://github.com/richgel999/miniz/tree/3.0.2",
+            "path": "third_party/miniz",
+            "treeSha256": "a00642b2dbf7de35cc3222a476021ddb63f5c0bca5ea0f5a148bed39082c6f77",
+            "treeHashRule": "SHA-256 of sorted UTF-8 relative-path TAB file-sha256 LF lines",
+            "files": {
+                "LICENSE": "0115478d567121238cf6cc1c0c361926cf07a49d9e4c9e66da97fac6a01646b3",
+                "miniz.c": "0fcdc9888cb3a29ca8f176bac087e5fe6c7258a6ab06b1c271c1e109a11d3740",
+                "miniz.h": "295d1a0041aea09609598c0f1f35c1977ca05ad662acbadcfdaac44c140af37b"
+            }
+        },
+        {
+            "name": "yyjson",
+            "version": "0.12.0",
+            "license": "MIT",
+            "upstream": "https://github.com/ibireme/yyjson/tree/0.12.0",
+            "path": "third_party/yyjson",
+            "treeSha256": "7a8ed4b0a1e9839944e245da5790104a76ec35c891ef37f42550bfa00293f7e6",
+            "treeHashRule": "SHA-256 of sorted UTF-8 relative-path TAB file-sha256 LF lines",
+            "files": {
+                "LICENSE": "45e384d3d52c73cba3a64d6e6c25d47cd738cd8a55c30629e3201046eda62947",
+                "yyjson.c": "ac2e9bbb2e2d9149d90878d40506a1d624fa0b33c979a11b61075c54782c6d6a",
+                "yyjson.h": "175867c5493a5df648cec566717fa1c29aa2f6096f5f0cf1efad0b65e1f6d7b3"
+            }
+        },
+        {
+            "name": "blake3",
+            "version": "1.8.2",
+            "license": "CC0-1.0 OR Apache-2.0",
+            "upstream": "https://github.com/BLAKE3-team/BLAKE3/tree/1.8.2/c",
+            "path": "third_party/blake3",
+            "treeSha256": "b3577663ad9bc7947b34bf897fd6444a2ed1e5c2bdbbe7ee514862ab9f4730a1",
+            "treeHashRule": "SHA-256 of sorted UTF-8 relative-path TAB file-sha256 LF lines",
+            "files": {
+                "blake3.c": "0cd1d6aa002ac44cbf0b0cff5d3f23df3fd190fdc25dfc6d7f3de2afeffba5bd",
+                "blake3.h": "ca1e562d173c264c19b2a89d179f5fa94000966b6b8f4182b6682e136a8cbfdf",
+                "blake3_dispatch.c": "a6cef5c497d95c8f7fcde6e1a8e140637f3260b31e911319e69cf5069459b635",
+                "blake3_impl.h": "65cf3597897090e8ded5968e3c26304a65b0091e8fabfa434c3d1a5eef29cb17",
+                "blake3_portable.c": "2bc25b0dad67b4329d0b49cfa075ab2b0d04e424addbddc4e9c389c52a192524",
+                "LICENSE_A2": "00fcc7a934ddbc9ece2a7cc063ac788e284b703b1d705ccbba72d462aa97921e",
+                "LICENSE_CC0": "a2010f343487d3f7618affe54f789f5487602331c0a8d03f49e9a7c547cf0499"
+            }
+        }
+    ],
     "toolchains": {
         "cmake": ">= 3.21",
         "windows": "MSVC from Visual Studio 2022 or newer (local: Visual Studio 18)",
         "android": "NDK r28c or newer, API 26",
         "macos": "AppleClang, deployment target 13.0",
         "java": "bridge compiled with --release 17; load-tested on 17/21/25"
-    }
+    },
+    "notices": [
+        {
+            "path": "third_party/notices/LICENSE-Sparkle-Morpher.txt",
+            "sha256": "4c1a24f4db6687b5db21cbaa59f2a5030a8fdba47d75e523af3c3061b3cff8fa",
+            "source": "OMP 26.3 YSM crypto license notice (MIT, Marciken, 2026)"
+        }
+    ]
 }

@@ -44,19 +44,79 @@ else()
     set(omm_warning_flags -Wall -Wextra -Wpedantic)
 endif()
 
-add_library(omm_core SHARED
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+find_package(Threads REQUIRED)
+
+# ---- Pinned third-party sources (deps/dependencies.lock.json) ----
+add_library(omm_blake3 STATIC third_party/blake3/blake3.c third_party/blake3/blake3_dispatch.c
+    third_party/blake3/blake3_portable.c)
+target_include_directories(omm_blake3 PUBLIC third_party/blake3)
+target_compile_definitions(omm_blake3 PUBLIC BLAKE3_API= BLAKE3_PRIVATE= PRIVATE BLAKE3_NO_SSE2 BLAKE3_NO_SSE41
+    BLAKE3_NO_AVX2 BLAKE3_NO_AVX512 BLAKE3_USE_NEON=0)
+
+add_library(omm_zstd STATIC
+    third_party/zstd/lib/common/debug.c
+    third_party/zstd/lib/common/entropy_common.c
+    third_party/zstd/lib/common/error_private.c
+    third_party/zstd/lib/common/fse_decompress.c
+    third_party/zstd/lib/common/xxhash.c
+    third_party/zstd/lib/common/zstd_common.c
+    third_party/zstd/lib/decompress/huf_decompress.c
+    third_party/zstd/lib/decompress/zstd_ddict.c
+    third_party/zstd/lib/decompress/zstd_decompress.c
+    third_party/zstd/lib/decompress/zstd_decompress_block.c)
+target_include_directories(omm_zstd PUBLIC third_party/zstd/lib PRIVATE third_party/zstd/lib/common)
+# Portable C decoder only: no hand-written assembly, no legacy formats, no threads.
+target_compile_definitions(omm_zstd PRIVATE ZSTD_DISABLE_ASM ZSTD_LEGACY_SUPPORT=0 ZSTD_MULTITHREAD=0)
+
+add_library(omm_miniz STATIC third_party/miniz/miniz.c)
+target_include_directories(omm_miniz PUBLIC third_party/miniz)
+target_compile_definitions(omm_miniz PUBLIC MINIZ_NO_STDIO MINIZ_NO_TIME MINIZ_NO_ARCHIVE_WRITING_APIS)
+
+add_library(omm_yyjson STATIC third_party/yyjson/yyjson.c)
+target_include_directories(omm_yyjson PUBLIC third_party/yyjson)
+
+# ---- omm-core implementation (shared by the library and the white-box tests) ----
+add_library(omm_core_impl OBJECT
     src/abi/error.cpp
     src/abi/cpu_features.cpp
-    src/abi/runtime.cpp)
+    src/abi/runtime.cpp
+    src/ysmparser/decode.cpp
+    src/ysmparser/crypto.cpp
+    src/ysmparser/current_container.cpp
+    src/ysmparser/current_mapper.cpp
+    src/ysmparser/resource_set.cpp
+    src/ysmparser/ysgp.cpp
+    src/ysmparser/binary_reader.cpp
+    src/ysmparser/json.cpp
+    src/ysmparser/normalize.cpp
+    src/ysmparser/manifest.cpp
+    src/ysmparser/binary_mapper.cpp
+    src/ysmparser/parse.cpp
+    src/ysmparser/api.cpp)
+target_include_directories(omm_core_impl
+    PUBLIC
+        "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
+        "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>")
+target_compile_definitions(omm_core_impl PUBLIC OMM_BUILDING_LIBRARY PRIVATE "OMM_BUILD_ID=\"${OMM_BUILD_ID}\"")
+target_compile_options(omm_core_impl PRIVATE ${omm_warning_flags})
+if(NOT MSVC)
+    # Bit-exact parity with the Java reference needs explicit fma() calls only: Clang otherwise
+    # contracts a*b+c into FMA on its own. MSVC /fp:precise does not contract (VS 2022+).
+    target_compile_options(omm_core_impl PRIVATE -ffp-contract=off)
+endif()
+target_link_libraries(omm_core_impl PUBLIC omm_zstd omm_miniz omm_yyjson omm_blake3 Threads::Threads)
 
+add_library(omm_core SHARED $<TARGET_OBJECTS:omm_core_impl>)
 target_include_directories(omm_core
     PUBLIC
         "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
         "$<INSTALL_INTERFACE:include>"
     PRIVATE
         "${CMAKE_CURRENT_SOURCE_DIR}/src")
-target_compile_definitions(omm_core PRIVATE OMM_BUILDING_LIBRARY "OMM_BUILD_ID=\"${OMM_BUILD_ID}\"")
+target_compile_definitions(omm_core PRIVATE OMM_BUILDING_LIBRARY)
 target_compile_options(omm_core PRIVATE ${omm_warning_flags})
+target_link_libraries(omm_core PRIVATE omm_zstd omm_miniz omm_yyjson omm_blake3 Threads::Threads)
 
 if(OMM_BUILD_JNI)
     target_sources(omm_core PRIVATE src/jni/jni_bridge.cpp)
@@ -98,6 +158,15 @@ install(TARGETS omm_core
     ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}")
 install(DIRECTORY include/omm DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}")
 install(FILES LICENSE.md DESTINATION "${CMAKE_INSTALL_DATADIR}/omm_core")
+install(FILES schemas/asset-section-v1.schema.json DESTINATION "${CMAKE_INSTALL_DATADIR}/omm_core/schemas")
+foreach(omm_dependency IN ITEMS zstd miniz yyjson)
+    install(FILES "third_party/${omm_dependency}/LICENSE"
+        DESTINATION "${CMAKE_INSTALL_DATADIR}/omm_core/licenses/${omm_dependency}")
+endforeach()
+install(FILES third_party/blake3/LICENSE_CC0 third_party/blake3/LICENSE_A2
+    DESTINATION "${CMAKE_INSTALL_DATADIR}/omm_core/licenses/blake3")
+install(FILES third_party/notices/LICENSE-Sparkle-Morpher.txt
+    DESTINATION "${CMAKE_INSTALL_DATADIR}/omm_core/licenses/sparkle-morpher")
 
 if(OMM_BUILD_TESTS)
     enable_testing()
@@ -112,9 +181,51 @@ if(OMM_BUILD_TESTS)
     target_compile_options(omm_header_cpp_test PRIVATE ${omm_warning_flags})
     add_test(NAME omm_header_cpp_test COMMAND omm_header_cpp_test)
 
+    add_executable(omm_parser_test tests/cpp/parser_test.cpp)
+    target_link_libraries(omm_parser_test PRIVATE omm_core omm_yyjson)
+    target_compile_options(omm_parser_test PRIVATE ${omm_warning_flags})
+    add_test(NAME omm_parser_test COMMAND omm_parser_test)
+
+    # White-box tests link the implementation objects directly.
+    add_executable(omm_crypto_test tests/cpp/crypto_test.cpp)
+    target_link_libraries(omm_crypto_test PRIVATE omm_core_impl)
+    target_compile_options(omm_crypto_test PRIVATE ${omm_warning_flags})
+    add_test(NAME omm_crypto_test COMMAND omm_crypto_test)
+
+    add_executable(omm_parallel_test tests/cpp/parallel_test.cpp)
+    target_link_libraries(omm_parallel_test PRIVATE omm_core_impl)
+    target_compile_options(omm_parallel_test PRIVATE ${omm_warning_flags})
+    add_test(NAME omm_parallel_test COMMAND omm_parallel_test)
+    set_tests_properties(omm_parallel_test PROPERTIES TIMEOUT 15)
+
+    add_executable(omm_current_parser_test tests/cpp/current_parser_test.cpp)
+    target_link_libraries(omm_current_parser_test PRIVATE omm_core_impl)
+    target_compile_options(omm_current_parser_test PRIVATE ${omm_warning_flags})
+    add_test(NAME omm_current_parser_test COMMAND omm_current_parser_test)
+
+    # Differential probe (prints digests only); run by tools/m2/Test-OmpDifferential.ps1.
+    add_executable(omm_ysm_decode_probe tests/tools/ysm_decode_probe.cpp)
+    target_link_libraries(omm_ysm_decode_probe PRIVATE omm_core_impl)
+    target_compile_options(omm_ysm_decode_probe PRIVATE ${omm_warning_flags})
+
+    add_executable(omm_ysm_stage_probe tests/tools/ysm_stage_probe.cpp)
+    target_link_libraries(omm_ysm_stage_probe PRIVATE omm_core_impl)
+    target_compile_options(omm_ysm_stage_probe PRIVATE ${omm_warning_flags})
+
+    # Normalization differential, native side (prints the NormalizedDump line format).
+    add_executable(omm_ysm_normalized_dump tests/tools/ysm_normalized_dump.cpp)
+    target_link_libraries(omm_ysm_normalized_dump PRIVATE omm_core_impl)
+    target_compile_options(omm_ysm_normalized_dump PRIVATE ${omm_warning_flags})
+
+    # Public-ABI sample probe (summary only); run by tools/m2/Test-OmpDifferential.ps1.
+    add_executable(omm_ysm_asset_probe tests/tools/ysm_asset_probe.cpp)
+    target_link_libraries(omm_ysm_asset_probe PRIVATE omm_core)
+    target_compile_options(omm_ysm_asset_probe PRIVATE ${omm_warning_flags})
+
     if(WIN32)
         # Test executables find omm_core.dll next to themselves.
-        set_target_properties(omm_core omm_abi_test omm_header_cpp_test PROPERTIES
-            RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
+        set_target_properties(omm_core omm_abi_test omm_header_cpp_test omm_crypto_test omm_ysm_decode_probe omm_ysm_asset_probe
+            omm_ysm_normalized_dump omm_parser_test omm_parallel_test omm_current_parser_test omm_ysm_stage_probe
+            PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
     endif()
 endif()

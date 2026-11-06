@@ -35,10 +35,10 @@ extern "C" {
 #endif
 
 #define OMM_ABI_MAJOR 0u
-#define OMM_ABI_MINOR 1u
+#define OMM_ABI_MINOR 2u
 
 /* Schema/cache versions are independent of the ABI version. */
-#define OMM_ASSET_SCHEMA_VERSION 0u
+#define OMM_ASSET_SCHEMA_VERSION 1u
 #define OMM_MESH_SCHEMA_VERSION 0u
 #define OMM_CACHE_VERSION 0u
 
@@ -85,6 +85,7 @@ typedef uint32_t omm_backend;
 #define omm_stage_abi 1u
 #define omm_stage_runtime 2u
 #define omm_stage_jni 3u
+#define omm_stage_parse 4u
 
 typedef struct omm_bytes {
     const uint8_t *data;
@@ -127,6 +128,7 @@ typedef struct omm_runtime_desc {
     uint32_t requested_abi_major;
     uint32_t requested_abi_minor;
     omm_cpu_mode cpu_mode;
+    /* Total CPU execution threads, including the caller. 0 = one per logical CPU core. */
     uint32_t worker_count;
     uint64_t cpu_memory_budget;
     uint64_t parse_max_file_bytes;
@@ -158,6 +160,117 @@ OMM_API omm_status OMM_CALL omm_runtime_get_caps(omm_handle runtime,
                                                  omm_error *error);
 
 OMM_API omm_status OMM_CALL omm_runtime_destroy(omm_handle runtime, omm_error *error);
+
+/* ---------------------------------------------------------------------------
+ * ysmparser (API section 4, ABI 0.2)
+ * ------------------------------------------------------------------------- */
+
+/* Source formats; bit (1u << format) in omm_runtime_caps.parser_formats and
+ * omm_ysm_parse_desc.allowed_formats. */
+#define omm_ysm_unknown 0u
+#define omm_ysm_raw 1u
+#define omm_ysm_zip 2u
+#define omm_ysm_legacy_v1 3u
+#define omm_ysm_legacy_v2 4u
+#define omm_ysm_legacy_v3 5u
+#define omm_ysm_asset_container 6u
+
+/* Source semantics profile. 0 selects the profile from the detected format. */
+#define omm_profile_omp_compat 1u
+#define omm_profile_ysm_current 2u
+
+/* Asset sections (UTF-8 JSON, schema_version 1). */
+#define omm_section_metadata 1u
+#define omm_section_animations 2u
+#define omm_section_controllers 3u
+#define omm_section_expressions 4u
+#define omm_section_resources 5u
+#define omm_section_diagnostics 6u
+
+#define OMM_YSM_PROBE_RESULT_VERSION 1u
+
+typedef struct omm_ysm_probe_result {
+    uint32_t struct_size;
+    uint32_t version;
+    uint32_t format;          /* omm_ysm_* */
+    uint32_t source_version;  /* YSGP crypto version, else 0 */
+    uint32_t parseable;       /* 1 when this build has a decoder for the format */
+    uint32_t reserved;
+    uint64_t min_input_bytes; /* bytes needed before the format can be decided */
+} omm_ysm_probe_result;
+
+/* One raw-directory file; path is a UTF-8 relative path. Fixed leaf struct. */
+typedef struct omm_ysm_entry {
+    omm_bytes path;
+    omm_bytes data;
+} omm_ysm_entry;
+
+#define OMM_YSM_PARSE_DESC_VERSION 1u
+
+/* Limits: 0 selects the runtime default (never "unlimited"). */
+typedef struct omm_ysm_parse_desc {
+    uint32_t struct_size;
+    uint32_t version;
+    uint32_t source_profile;
+    uint32_t allowed_formats; /* 0 = every format compiled in */
+    omm_bytes display_name;   /* fallback model name, UTF-8; may be empty */
+    uint64_t input_bytes_limit;
+    uint64_t expanded_bytes_limit;
+    uint64_t entry_bytes_limit;
+    uint32_t entry_count_limit;
+    uint32_t nesting_limit;
+    uint32_t bone_limit;
+    uint32_t vertex_limit;
+    uint32_t keyframe_limit;
+    uint32_t reserved;
+} omm_ysm_parse_desc;
+
+#define OMM_ASSET_INFO_VERSION 1u
+
+typedef struct omm_asset_info {
+    uint32_t struct_size;
+    uint32_t version;
+    uint32_t source_format;  /* omm_ysm_* */
+    uint32_t source_version; /* crypto version (YSGP) or binary format (v3 payload) */
+    uint32_t asset_schema;
+    uint32_t geometry_count;
+    uint32_t bone_count;
+    uint32_t quad_count;
+    uint32_t animation_file_count;
+    uint32_t clip_count;
+    uint32_t controller_count;
+    uint32_t resource_count;
+    uint32_t diagnostic_count;
+    uint32_t reserved;
+    uint64_t retained_bytes;
+} omm_asset_info;
+
+OMM_API omm_status OMM_CALL omm_ysm_probe(omm_bytes input, omm_ysm_probe_result *out_result,
+                                          omm_error *error);
+
+OMM_API omm_status OMM_CALL omm_ysm_parse(omm_handle runtime, omm_bytes input,
+                                          const omm_ysm_parse_desc *desc,
+                                          omm_handle *out_asset, omm_error *error);
+
+OMM_API omm_status OMM_CALL omm_ysm_parse_entries(omm_handle runtime, const omm_ysm_entry *entries,
+                                                  uint32_t count, const omm_ysm_parse_desc *desc,
+                                                  omm_handle *out_asset, omm_error *error);
+
+OMM_API omm_status OMM_CALL omm_asset_get_info(omm_handle asset, omm_asset_info *out_info,
+                                               omm_error *error);
+
+/* Empty output (capacity 0) queries *out_required; insufficient capacity returns
+ * omm_error_capacity without writing. */
+OMM_API omm_status OMM_CALL omm_asset_read_section(omm_handle asset, uint32_t section,
+                                                   omm_mut_bytes output, uint64_t *out_required,
+                                                   omm_error *error);
+
+/* Chunked read; offset at or past the end succeeds with *out_written = 0. */
+OMM_API omm_status OMM_CALL omm_asset_read_resource(omm_handle asset, uint32_t resource_id,
+                                                    uint64_t offset, omm_mut_bytes output,
+                                                    uint64_t *out_written, omm_error *error);
+
+OMM_API omm_status OMM_CALL omm_asset_release(omm_handle asset, omm_error *error);
 
 #ifdef __cplusplus
 }

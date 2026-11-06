@@ -8,6 +8,8 @@ public final class OmmNativeException extends RuntimeException {
     public static final int ABI = 2;
     public static final int HANDLE = 3;
     public static final int UNSUPPORTED = 4;
+    public static final int FORMAT = 5;
+    public static final int LIMIT = 6;
     public static final int STATE = 12;
 
     private final int code;

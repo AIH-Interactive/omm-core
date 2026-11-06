@@ -46,6 +46,13 @@ public final class JniLoadTest {
         expect((caps[0] & (1 << caps[1])) != 0, "active kernel is available");
         NativeApi.omm_runtime_destroy(runtime);
 
+        for (int threads : new int[]{1, 2, 65}) {
+            long configured = NativeApi.omm_runtime_create(version[0], version[1], NativeApi.CPU_AUTO,
+                    threads, 0, 0, 0);
+            expect(NativeApi.omm_runtime_get_caps(configured)[3] == threads, "explicit thread count");
+            NativeApi.omm_runtime_destroy(configured);
+        }
+
         expectStatus(OmmNativeException.HANDLE, () -> NativeApi.omm_runtime_get_caps(runtime), "stale handle");
         expectStatus(OmmNativeException.HANDLE, () -> NativeApi.omm_runtime_destroy(0), "null handle");
         expectStatus(OmmNativeException.ABI,

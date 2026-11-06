@@ -1,0 +1,540 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "omm-core asset section v1",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "records"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "records": {
+      "type": "array",
+      "items": {
+        "anyOf": [
+          {
+            "$ref": "#/$defs/metadata"
+          },
+          {
+            "$ref": "#/$defs/animationFile"
+          },
+          {
+            "$ref": "#/$defs/controllerFile"
+          },
+          {
+            "$ref": "#/$defs/expression"
+          },
+          {
+            "$ref": "#/$defs/resource"
+          },
+          {
+            "$ref": "#/$defs/diagnostic"
+          }
+        ]
+      }
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 4294967295
+    },
+    "resourceRef": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/id"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "strings": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "program": {
+      "type": "object",
+      "required": [
+        "format"
+      ],
+      "properties": {
+        "format": {
+          "$ref": "#/$defs/id"
+        },
+        "source": {
+          "type": "string"
+        },
+        "bytecode_hex": {
+          "type": "string",
+          "pattern": "^(?:[0-9a-f]{2})*$"
+        }
+      },
+      "oneOf": [
+        {
+          "required": [
+            "source"
+          ],
+          "not": {
+            "required": [
+              "bytecode_hex"
+            ]
+          }
+        },
+        {
+          "required": [
+            "bytecode_hex"
+          ],
+          "not": {
+            "required": [
+              "source"
+            ]
+          }
+        }
+      ]
+    },
+    "component": {
+      "type": "object",
+      "required": [
+        "value"
+      ],
+      "properties": {
+        "value": {
+          "type": "number"
+        },
+        "expression": {
+          "type": "string"
+        },
+        "program": {
+          "$ref": "#/$defs/program"
+        }
+      },
+      "description": "program takes precedence when present; otherwise expression is host Molang text; value is used only for a constant or the declared fallback."
+    },
+    "vector": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 3,
+      "items": {
+        "$ref": "#/$defs/component"
+      }
+    },
+    "channel": {
+      "anyOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "constant": {
+              "$ref": "#/$defs/vector"
+            },
+            "keyframes": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": [
+                  "ordinal",
+                  "time",
+                  "interpolation",
+                  "pre",
+                  "post"
+                ],
+                "properties": {
+                  "ordinal": {
+                    "$ref": "#/$defs/id"
+                  },
+                  "time": {
+                    "type": "number"
+                  },
+                  "interpolation": {
+                    "type": "string"
+                  },
+                  "pre": {
+                    "$ref": "#/$defs/vector"
+                  },
+                  "post": {
+                    "$ref": "#/$defs/vector"
+                  }
+                }
+              }
+            }
+          },
+          "oneOf": [
+            {
+              "required": [
+                "constant"
+              ]
+            },
+            {
+              "required": [
+                "keyframes"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "metadata": {
+      "type": "object",
+      "required": [
+        "source",
+        "kind",
+        "name",
+        "authors",
+        "geometries",
+        "manifest"
+      ],
+      "properties": {
+        "source": {
+          "type": "object",
+          "required": [
+            "container",
+            "binary_format",
+            "zip_root"
+          ],
+          "properties": {
+            "container": {
+              "enum": [
+                "directory",
+                "zip",
+                "legacy_v1",
+                "legacy_v2",
+                "v3",
+                "current"
+              ]
+            },
+            "binary_format": {
+              "type": "integer"
+            },
+            "zip_root": {
+              "type": "string"
+            }
+          }
+        },
+        "kind": {
+          "enum": [
+            "current",
+            "legacy"
+          ]
+        },
+        "name": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "authors": {
+          "$ref": "#/$defs/strings"
+        },
+        "main_model": {
+          "$ref": "#/$defs/resourceRef"
+        },
+        "arm_model": {
+          "$ref": "#/$defs/resourceRef"
+        },
+        "geometries": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "id",
+              "path",
+              "texture_width",
+              "texture_height",
+              "bones",
+              "quads"
+            ]
+          }
+        },
+        "manifest": {
+          "type": "object"
+        }
+      }
+    },
+    "animationFile": {
+      "type": "object",
+      "required": [
+        "id",
+        "path",
+        "resource",
+        "first_person",
+        "clips"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "path": {
+          "type": "string"
+        },
+        "resource": {
+          "$ref": "#/$defs/resourceRef"
+        },
+        "first_person": {
+          "type": "boolean"
+        },
+        "clips": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "name",
+              "length",
+              "unbounded",
+              "loop",
+              "blend_weight",
+              "bones",
+              "events"
+            ],
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "length": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              },
+              "unbounded": {
+                "type": "boolean"
+              },
+              "loop": {
+                "enum": [
+                  "once",
+                  "loop",
+                  "hold_on_last_frame"
+                ]
+              },
+              "blend_weight": {
+                "$ref": "#/$defs/component"
+              },
+              "bones": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "name"
+                  ],
+                  "properties": {
+                    "name": {
+                      "type": "string"
+                    },
+                    "position": {
+                      "$ref": "#/$defs/channel"
+                    },
+                    "rotation": {
+                      "$ref": "#/$defs/channel"
+                    },
+                    "scale": {
+                      "$ref": "#/$defs/channel"
+                    }
+                  }
+                }
+              },
+              "events": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "ordinal",
+                    "time",
+                    "type",
+                    "text",
+                    "params"
+                  ],
+                  "properties": {
+                    "ordinal": {
+                      "$ref": "#/$defs/id"
+                    },
+                    "time": {
+                      "type": "number"
+                    },
+                    "type": {
+                      "type": "string"
+                    },
+                    "text": {
+                      "type": "string"
+                    },
+                    "params": {
+                      "type": "object"
+                    },
+                    "program": {
+                      "$ref": "#/$defs/program"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "controllerFile": {
+      "type": "object",
+      "required": [
+        "id",
+        "path",
+        "resource",
+        "controllers"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "path": {
+          "type": "string"
+        },
+        "resource": {
+          "$ref": "#/$defs/resourceRef"
+        },
+        "controllers": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "name",
+              "initial_state",
+              "states"
+            ],
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "initial_state": {
+                "type": "string"
+              },
+              "states": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "name",
+                    "animations",
+                    "transitions",
+                    "on_entry",
+                    "on_exit"
+                  ],
+                  "properties": {
+                    "name": {
+                      "type": "string"
+                    },
+                    "animations": {
+                      "type": "array"
+                    },
+                    "transitions": {
+                      "type": "array"
+                    },
+                    "on_entry": {
+                      "$ref": "#/$defs/strings"
+                    },
+                    "on_exit": {
+                      "$ref": "#/$defs/strings"
+                    },
+                    "entry_program": {
+                      "$ref": "#/$defs/program"
+                    },
+                    "exit_program": {
+                      "$ref": "#/$defs/program"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "expression": {
+      "type": "object",
+      "required": [
+        "id",
+        "role",
+        "language"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "role": {
+          "type": "string"
+        },
+        "language": {
+          "type": "string"
+        },
+        "program": {
+          "$ref": "#/$defs/program"
+        },
+        "text": {
+          "type": "string"
+        }
+      },
+      "anyOf": [
+        {
+          "required": [
+            "program"
+          ]
+        },
+        {
+          "required": [
+            "text"
+          ]
+        }
+      ]
+    },
+    "resource": {
+      "type": "object",
+      "required": [
+        "id",
+        "path",
+        "media_type",
+        "bytes"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "path": {
+          "type": "string"
+        },
+        "media_type": {
+          "type": "string"
+        },
+        "bytes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "width": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "height": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "diagnostic": {
+      "type": "object",
+      "required": [
+        "severity",
+        "message"
+      ],
+      "properties": {
+        "severity": {
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

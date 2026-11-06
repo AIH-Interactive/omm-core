@@ -307,7 +307,15 @@ else {
 
 # ---- Install ----
 if (Test-Path -LiteralPath $OutputDirectory) {
-    Remove-Item -LiteralPath $OutputDirectory -Recurse -Force
+    $expectedOutputDirectory = [System.IO.Path]::GetFullPath($OutputDirectory).TrimEnd('\', '/')
+    $resolvedOutputDirectory = (Resolve-Path -LiteralPath $OutputDirectory).Path.TrimEnd('\', '/')
+    $volumeRoot = [System.IO.Path]::GetPathRoot($expectedOutputDirectory).TrimEnd('\', '/')
+    if (-not [string]::Equals($resolvedOutputDirectory, $expectedOutputDirectory, [System.StringComparison]::OrdinalIgnoreCase) -or
+        [string]::Equals($resolvedOutputDirectory, $repoRoot, [System.StringComparison]::OrdinalIgnoreCase) -or
+        [string]::Equals($resolvedOutputDirectory, $volumeRoot, [System.StringComparison]::OrdinalIgnoreCase)) {
+        throw "Refusing to remove unsafe install directory: $resolvedOutputDirectory"
+    }
+    Remove-Item -LiteralPath $resolvedOutputDirectory -Recurse -Force
 }
 Invoke-Step -Name 'install' -Command 'cmake' -Arguments @('--install', $buildDirectory, '--config', $Configuration, '--prefix', $OutputDirectory)
 
@@ -336,11 +344,20 @@ Invoke-Step -Name 'jar-bridge' -Command $jar -Arguments @('--create', '--file', 
 
 $jniResults = [ordered] @{}
 if ($runsTests) {
-    Invoke-Step -Name 'javac-tests' -Command $javac -Arguments @('--release', '17', '-encoding', 'UTF-8', '-cp', $javaClasses, '-d', $testClasses, (Join-Path $repoRoot 'tests/java/JniLoadTest.java'))
+    $currentFixture = Join-Path $buildDirectory 'java/current-fixture.ysm'
+    $fixtureExecutable = if ($hostIsWindows) {
+        Join-Path $buildDirectory "bin/$Configuration/omm_current_parser_test.exe"
+    } else {
+        Join-Path $buildDirectory 'omm_current_parser_test'
+    }
+    Invoke-Step -Name 'current-fixture' -Command $fixtureExecutable -Arguments @('--write-fixture', $currentFixture)
+    $javaTests = @(Get-ChildItem -Path (Join-Path $repoRoot 'tests/java') -Filter '*.java' | ForEach-Object { $_.FullName })
+    Invoke-Step -Name 'javac-tests' -Command $javac -Arguments (@('--release', '17', '-encoding', 'UTF-8', '-cp', $javaClasses, '-d', $testClasses) + $javaTests)
     $classPath = "$javaClasses$([System.IO.Path]::PathSeparator)$testClasses"
     foreach ($feature in $jdkHomes.Keys) {
         $java = Join-Path (Join-Path $jdkHomes[$feature] 'bin') 'java'
         Invoke-Step -Name "jni-load-java$feature" -Command $java -Arguments @('-cp', $classPath, 'JniLoadTest', $library.FullName)
+        Invoke-Step -Name "jni-parser-java$feature" -Command $java -Arguments @('-cp', $classPath, 'JniParserTest', $library.FullName, $currentFixture)
         $jniResults["java$feature"] = 'PASS'
     }
     foreach ($feature in @('17', '21', '25')) {
@@ -359,6 +376,7 @@ else {
 }
 $validation['jniLoad'] = $jniResults
 $validation['gpu'] = 'NOT_APPLICABLE (no GPU code before M4)'
+$validation['ompDifferential'] = 'LOCAL_ONLY (tools/m2/Test-OmpDifferential.ps1; third-party samples are not in CI)'
 $validation['realGame'] = 'MANUAL/PENDING'
 
 # ---- Manifest ----
