@@ -1,0 +1,538 @@
+{
+    "schema":  "omm-m0-sample-manifest/1",
+    "sampleRoot":  "refs/avatars",
+    "hashRule":  "file: SHA-256 of bytes; directory: SHA-256 of sorted UTF-8 lines \"relpath\u003cTAB\u003esha256\u003cLF\u003e\"",
+    "entries":  [
+                    {
+                        "name":  "_创伤小组_霜狐.ysm",
+                        "type":  "file",
+                        "engine":  "ysm",
+                        "container":  "ysgp-text-header",
+                        "sha256":  "e0dd9b877fb31e48658a0a282522ffe3537e57f1b413a5c931ef93c56da5e3ce",
+                        "bytes":  341817,
+                        "fileCount":  1
+                    },
+                    {
+                        "name":  "01_taisho_maid",
+                        "type":  "directory",
+                        "engine":  "ysm",
+                        "container":  "directory/ysm-raw-current",
+                        "sha256":  "b95d4b698871959876ad4b1ebde11e5fc2a88caee45767629627638d84a79845",
+                        "bytes":  3123310,
+                        "fileCount":  43
+                    },
+                    {
+                        "name":  "02_new_year",
+                        "type":  "directory",
+                        "engine":  "ysm",
+                        "container":  "directory/ysm-raw-current",
+                        "sha256":  "a6afa2d48a15193018cfc476bd53c6b15b9c7276d39f7ba4ff19eab117b46f0a",
+                        "bytes":  906308,
+                        "fileCount":  15
+                    },
+                    {
+                        "name":  "03_astronaut",
+                        "type":  "directory",
+                        "engine":  "ysm",
+                        "container":  "directory/ysm-raw-current",
+                        "sha256":  "dc6635fd7a264496bbfa3d9200cf9b8b944827ad060d819b1fbce8891ce0e0f7",
+                        "bytes":  943961,
+                        "fileCount":  19
+                    },
+                    {
+                        "name":  "04_kongfu",
+                        "type":  "directory",
+                        "engine":  "ysm",
+                        "container":  "directory/ysm-raw-current",
+                        "sha256":  "92bddab58e3c9948910696931a3c81a5015862ff3c43602df710248cf10928f1",
+                        "bytes":  1311053,
+                        "fileCount":  16
+                    },
+                    {
+                        "name":  "05_magical",
+                        "type":  "directory",
+                        "engine":  "ysm",
+                        "container":  "directory/ysm-raw-current",
+                        "sha256":  "10b92fb99d4e1d9ab3e374e4e40226a5cff8ffc85b369b8d4027648be8883810",
+                        "bytes":  2193395,
+                        "fileCount":  24
+                    },
+                    {
+                        "name":  "06_hanfu",
+                        "type":  "directory",
+                        "engine":  "ysm",
+                        "container":  "directory/ysm-raw-current",
+                        "sha256":  "6d3a1c8a9d52b3ca3bde568df57bb544c83ab3c367c7397c91038091e3fad610",
+                        "bytes":  1215259,
+                        "fileCount":  11
+                    },
+                    {
+                        "name":  "07_jk",
+                        "type":  "directory",
+                        "engine":  "ysm",
+                        "container":  "directory/ysm-raw-current",
+                        "sha256":  "c4087e0f4447ae8b71e5154deff3d4453166f65611fb94a04649a50835d08475",
+                        "bytes":  1592416,
+                        "fileCount":  19
+                    },
+                    {
+                        "name":  "08_sta",
+                        "type":  "directory",
+                        "engine":  "ysm",
+                        "container":  "directory/ysm-raw-current",
+                        "sha256":  "59beba40614b8d15626cdd2cdc0762b3e082389ef267fb9a3ac485ab1374fc12",
+                        "bytes":  6957431,
+                        "fileCount":  19
+                    },
+                    {
+                        "name":  "09_hailuo",
+                        "type":  "directory",
+                        "engine":  "ysm",
+                        "container":  "directory/ysm-raw-current",
+                        "sha256":  "19c8cb143dfc6094742fc10f7746cddddfce9c1bf75c389f5b986bf55274fbf6",
+                        "bytes":  765588,
+                        "fileCount":  15
+                    },
+                    {
+                        "name":  "10_zhiban",
+                        "type":  "directory",
+                        "engine":  "ysm",
+                        "container":  "directory/ysm-raw-current",
+                        "sha256":  "386c1d9bb0c240d90df01abc7bd8ed9a0376654c8027c78add8a80179e6e1bac",
+                        "bytes":  993934,
+                        "fileCount":  12
+                    },
+                    {
+                        "name":  "11_salesperson",
+                        "type":  "directory",
+                        "engine":  "ysm",
+                        "container":  "directory/ysm-raw-current",
+                        "sha256":  "d0e27d8a345786c6adb7af7d4056f2084c668a780c5304e0868fb1d21038f04c",
+                        "bytes":  1072306,
+                        "fileCount":  13
+                    },
+                    {
+                        "name":  "12_little",
+                        "type":  "directory",
+                        "engine":  "ysm",
+                        "container":  "directory/ysm-raw-current",
+                        "sha256":  "9540e02c0a1185d863b4890afe47c800ac610cecd3b749adaa3d03e5b03f9ae3",
+                        "bytes":  1612242,
+                        "fileCount":  17
+                    },
+                    {
+                        "name":  "13_matured",
+                        "type":  "directory",
+                        "engine":  "ysm",
+                        "container":  "directory/ysm-raw-current",
+                        "sha256":  "5dbafec7b379772932c8823ba087430740870c14f944d5aafcd72ada94a7afef",
+                        "bytes":  4522928,
+                        "fileCount":  13
+                    },
+                    {
+                        "name":  "14_momo",
+                        "type":  "directory",
+                        "engine":  "ysm",
+                        "container":  "directory/ysm-raw-current",
+                        "sha256":  "626dc9b02e52d110276f9ccc08f24d98a2646547fcc117b9f1237b3a583b244e",
+                        "bytes":  4665813,
+                        "fileCount":  21
+                    },
+                    {
+                        "name":  "15_kluonoa",
+                        "type":  "directory",
+                        "engine":  "ysm",
+                        "container":  "directory/ysm-raw-current",
+                        "sha256":  "e74f0de86c3f5090b2b3b8d7375127742d63157fa2c96c60e13c24c45d5cda98",
+                        "bytes":  3010490,
+                        "fileCount":  39
+                    },
+                    {
+                        "name":  "16_tactics",
+                        "type":  "directory",
+                        "engine":  "ysm",
+                        "container":  "directory/ysm-raw-current",
+                        "sha256":  "e77bf0b493c54c54d537023905d5a365dca1abd7426c211e21cff7004a9efd30",
+                        "bytes":  3984223,
+                        "fileCount":  45
+                    },
+                    {
+                        "name":  "17_mini",
+                        "type":  "directory",
+                        "engine":  "ysm",
+                        "container":  "directory/ysm-raw-current",
+                        "sha256":  "d6b6e4e9971dced4af6af6e37ee58417270755696319e06f50c0e77e3fd9699a",
+                        "bytes":  1469701,
+                        "fileCount":  16
+                    },
+                    {
+                        "name":  "18_wedding",
+                        "type":  "directory",
+                        "engine":  "ysm",
+                        "container":  "directory/ysm-raw-current",
+                        "sha256":  "01781cd3492ca0680e3eaff883a27eca557417eaf6074972684a974436262d17",
+                        "bytes":  4477615,
+                        "fileCount":  42
+                    },
+                    {
+                        "name":  "19_nine_tailed",
+                        "type":  "directory",
+                        "engine":  "ysm",
+                        "container":  "directory/ysm-raw-current",
+                        "sha256":  "3432a1298ca7c6d45096648a8666644deec2468f60f35585c0b485c99b5ea40f",
+                        "bytes":  3748743,
+                        "fileCount":  43
+                    },
+                    {
+                        "name":  "20_survivor",
+                        "type":  "directory",
+                        "engine":  "ysm",
+                        "container":  "directory/ysm-raw-current",
+                        "sha256":  "ed65d60fb2ffb26822fed6eaf8e81acb55427fd1bccbedc4f83d4a7bb11135f8",
+                        "bytes":  2271859,
+                        "fileCount":  17
+                    },
+                    {
+                        "name":  "21_saint",
+                        "type":  "directory",
+                        "engine":  "ysm",
+                        "container":  "directory/ysm-raw-current",
+                        "sha256":  "f40b228e52926bfed9a96ae92b20061da8a7ea2e01ca8f1e334c68c204b190b0",
+                        "bytes":  4407078,
+                        "fileCount":  41
+                    },
+                    {
+                        "name":  "22_elf",
+                        "type":  "directory",
+                        "engine":  "ysm",
+                        "container":  "directory/ysm-raw-current",
+                        "sha256":  "9a82a1f920ee53ae17d4ac7aa5eb51e654addc73d851bd6d1579a93c384bac26",
+                        "bytes":  3801090,
+                        "fileCount":  30
+                    },
+                    {
+                        "name":  "AI Hobbyist Founder Public Server",
+                        "type":  "directory",
+                        "engine":  "figura",
+                        "container":  "directory/figura-avatar",
+                        "sha256":  "904eaa4153855f37b01e9fe1031d7bbfa8ba2fc475f355144920f585f6b3e0ea",
+                        "bytes":  880720,
+                        "fileCount":  16
+                    },
+                    {
+                        "name":  "AI Hobbyist Founder Public Server.zip",
+                        "type":  "file",
+                        "engine":  "figura",
+                        "container":  "zip/figura-avatar",
+                        "sha256":  "0d91575ada0d1cd6425dd0c9882273d85093d0c44d26fcfa7b766b4bc9dd26d9",
+                        "bytes":  187913,
+                        "fileCount":  1
+                    },
+                    {
+                        "name":  "anan-fullmodel-0.0.7-rel.zip",
+                        "type":  "file",
+                        "engine":  "unknown",
+                        "container":  "zip/unrecognized-layout",
+                        "sha256":  "3e18d9928f48b82a06dc22a6585cd98afcc0cccbf3cb19dff18d1418ee40b1e7",
+                        "bytes":  121983,
+                        "fileCount":  1
+                    },
+                    {
+                        "name":  "aylDWT 4.2.zip",
+                        "type":  "file",
+                        "engine":  "figura",
+                        "container":  "zip/figura-avatar",
+                        "sha256":  "bacecdd1a68ab2edf0f101a6422d2182bec87c2773badf4e78980830d3be0762",
+                        "bytes":  286490,
+                        "fileCount":  1
+                    },
+                    {
+                        "name":  "default",
+                        "type":  "directory",
+                        "engine":  "ysm",
+                        "container":  "directory/ysm-raw-current",
+                        "sha256":  "b4ef77fba3742c3e0c201938290806103da11348eb1494992c3cf8a38db6be8c",
+                        "bytes":  3225739,
+                        "fileCount":  42
+                    },
+                    {
+                        "name":  "DS鲸鱼娘.ysm",
+                        "type":  "file",
+                        "engine":  "ysm",
+                        "container":  "ysgp-text-header",
+                        "sha256":  "574ea0c1b55ec11aadd9101c1486c744c8c7a3d7753a8a25aef6344ca70ee75f",
+                        "bytes":  972115,
+                        "fileCount":  1
+                    },
+                    {
+                        "name":  "Elaina",
+                        "type":  "directory",
+                        "engine":  "ysm",
+                        "container":  "directory/ysm-raw-current",
+                        "sha256":  "a3911363b3bca883b65c29aea5425c5f0707f874e24149061403c3ea6d7f3acc",
+                        "bytes":  1191562,
+                        "fileCount":  10
+                    },
+                    {
+                        "name":  "GI_Furina",
+                        "type":  "directory",
+                        "engine":  "ysm",
+                        "container":  "directory/ysm-raw-current",
+                        "sha256":  "cfd3a607b9001d438f98f1dcacc4dfdffbd2466cca11e66c8f0542850b4b6919",
+                        "bytes":  2429862,
+                        "fileCount":  12
+                    },
+                    {
+                        "name":  "hsr_fuxuan_1",
+                        "type":  "directory",
+                        "engine":  "ysm",
+                        "container":  "directory/ysm-raw-current",
+                        "sha256":  "6cfe65a01dd5fbd17fd596d5ef249c0b3ec29b9840f8a0e58ba262ac0f04af6b",
+                        "bytes":  3899327,
+                        "fileCount":  8
+                    },
+                    {
+                        "name":  "hsr_fuxuan_1.ysm",
+                        "type":  "file",
+                        "engine":  "ysm",
+                        "container":  "ysgp-text-header",
+                        "sha256":  "19773711530fcc2586b7487347e94282b8bdb9390d26142d344a5e3fe997ed7c",
+                        "bytes":  796866,
+                        "fileCount":  1
+                    },
+                    {
+                        "name":  "new.ysm",
+                        "type":  "file",
+                        "engine":  "ysm",
+                        "container":  "ysgp-text-header",
+                        "sha256":  "f9ba0eb4d493dc5144050974e896a1b0525c61226c09cf6f931b1d4e91e99bc3",
+                        "bytes":  266000,
+                        "fileCount":  1
+                    },
+                    {
+                        "name":  "old.ysm",
+                        "type":  "file",
+                        "engine":  "ysm",
+                        "container":  "ysgp-binary-legacy-v2",
+                        "sha256":  "94936ac3b8bee6b32f6d86436bc11e2bec40a5209a0e044c2247597afacc07f4",
+                        "bytes":  461964,
+                        "fileCount":  1
+                    },
+                    {
+                        "name":  "sickle.zip",
+                        "type":  "file",
+                        "engine":  "figura",
+                        "container":  "zip/figura-avatar",
+                        "sha256":  "4626cc27f9b1821ea12a6495c2f2950d83561f5b55f5898c25180dc7e245f97f",
+                        "bytes":  3106399,
+                        "fileCount":  1
+                    },
+                    {
+                        "name":  "YSM_NEW_Model",
+                        "type":  "directory",
+                        "engine":  "ysm",
+                        "container":  "directory/ysm-raw-current",
+                        "sha256":  "088d9475c2c01b867023c1f019c7ae6723917b64d1462a1530caea87fad8242a",
+                        "bytes":  3303187,
+                        "fileCount":  44
+                    },
+                    {
+                        "name":  "YSM_OLD_Model",
+                        "type":  "directory",
+                        "engine":  "ysm",
+                        "container":  "directory/ysm-raw-legacy",
+                        "sha256":  "d98eb48a38355e0a0af8b325cc0baa0e5feb7c9bf79683eec7d5d287e86d9abe",
+                        "bytes":  2391772,
+                        "fileCount":  9
+                    },
+                    {
+                        "name":  "ZZZ_Ellen_1",
+                        "type":  "directory",
+                        "engine":  "ysm",
+                        "container":  "directory/ysm-raw-current",
+                        "sha256":  "cadc376366b282ba3d5d8ff11bad02f81475a543425da87289d6f21f399ee0e5",
+                        "bytes":  2269202,
+                        "fileCount":  13
+                    },
+                    {
+                        "name":  "ZZZ_Ellen_1.ysm",
+                        "type":  "file",
+                        "engine":  "ysm",
+                        "container":  "ysgp-text-header",
+                        "sha256":  "b40e8cfe067751da4ca7250ed7b45d6a55282abb2c85fa9a82f0c27961be1fc8",
+                        "bytes":  722763,
+                        "fileCount":  1
+                    },
+                    {
+                        "name":  "八重神子.ysm",
+                        "type":  "file",
+                        "engine":  "ysm",
+                        "container":  "ysgp-text-header",
+                        "sha256":  "9b2f705a407780d359ef08f6b29f636aaeda5472fbc6c8265b35e36661400662",
+                        "bytes":  934671,
+                        "fileCount":  1
+                    },
+                    {
+                        "name":  "绯英.ysm",
+                        "type":  "file",
+                        "engine":  "ysm",
+                        "container":  "ysgp-text-header",
+                        "sha256":  "9e621eee0e84af5df320344a7037409a4a03f1271054a5dc32062ebe06d8e086",
+                        "bytes":  6034380,
+                        "fileCount":  1
+                    },
+                    {
+                        "name":  "绯英高模v1.0.ysm",
+                        "type":  "file",
+                        "engine":  "ysm",
+                        "container":  "ysgp-text-header",
+                        "sha256":  "46f446d392e0a0aca80b0d9277e8622ac7ab20cd0e79150eb23e2bf4572d9cb1",
+                        "bytes":  781480,
+                        "fileCount":  1
+                    },
+                    {
+                        "name":  "芙宁娜1",
+                        "type":  "directory",
+                        "engine":  "ysm",
+                        "container":  "directory/ysm-raw-legacy",
+                        "sha256":  "77cb37f39c0b1e6ffa3245979477e9afb87f32c9b9a1fe3c8a66c36292118261",
+                        "bytes":  3509930,
+                        "fileCount":  10
+                    },
+                    {
+                        "name":  "芙宁娜Lv.999-白v1.11.ysm",
+                        "type":  "file",
+                        "engine":  "ysm",
+                        "container":  "ysgp-text-header",
+                        "sha256":  "6575cad9d5c88d54bdb46467db07d92170953419c848a3c4c9a9276304f7ddc2",
+                        "bytes":  1155332,
+                        "fileCount":  1
+                    },
+                    {
+                        "name":  "芙宁娜v3.14中文配音.ysm",
+                        "type":  "file",
+                        "engine":  "ysm",
+                        "container":  "ysgp-text-header",
+                        "sha256":  "f5fb807c1454a14ca5bdf519edd2ee852f0eccb5a0369bcac0b587eefc3a6254",
+                        "bytes":  13712332,
+                        "fileCount":  1
+                    },
+                    {
+                        "name":  "拉菲2兔女郎.ysm",
+                        "type":  "file",
+                        "engine":  "ysm",
+                        "container":  "ysgp-text-header",
+                        "sha256":  "af6405ccc89d6a9a8506a37a544878061518ed5b2a62ff3f74f0e3f4e53a9055",
+                        "bytes":  5542379,
+                        "fileCount":  1
+                    },
+                    {
+                        "name":  "鸣潮-达妮娅1.2",
+                        "type":  "directory",
+                        "engine":  "ysm",
+                        "container":  "directory/ysm-raw-current",
+                        "sha256":  "bdc8ece189f4c0652333c68ef5b642c83712c6570007237535dcc2aa24335231",
+                        "bytes":  6015172,
+                        "fileCount":  12
+                    },
+                    {
+                        "name":  "末影龙娘.ysm",
+                        "type":  "file",
+                        "engine":  "ysm",
+                        "container":  "ysgp-text-header",
+                        "sha256":  "3802ddeffbe387831657b72a197315ce6f92b1eadd304e2c399c97e4aa643bf8",
+                        "bytes":  5838571,
+                        "fileCount":  1
+                    },
+                    {
+                        "name":  "纳西妲1",
+                        "type":  "directory",
+                        "engine":  "ysm",
+                        "container":  "directory/ysm-raw-legacy",
+                        "sha256":  "8aa9dd072d821d06292281cc08c760ef3c58b09f5a64e02f1390fe9122575785",
+                        "bytes":  1163274,
+                        "fileCount":  7
+                    },
+                    {
+                        "name":  "青衣1",
+                        "type":  "directory",
+                        "engine":  "ysm",
+                        "container":  "directory/ysm-raw-current",
+                        "sha256":  "120b21a464c7cb056a0eb4febef89d869c5901ea90f2ed6a69b6938f9b083f34",
+                        "bytes":  4994247,
+                        "fileCount":  21
+                    },
+                    {
+                        "name":  "少女-哥伦比娅.ysm",
+                        "type":  "file",
+                        "engine":  "ysm",
+                        "container":  "ysgp-text-header",
+                        "sha256":  "107e5847d60a8c81cc9fbbf96878bdb1e3c7c297acb3d0e7a3d8642aa176a789",
+                        "bytes":  750280,
+                        "fileCount":  1
+                    },
+                    {
+                        "name":  "希尔薇Sylvie.ysm",
+                        "type":  "file",
+                        "engine":  "ysm",
+                        "container":  "ysgp-text-header",
+                        "sha256":  "8a60eff1f1aa6cf5abcf70d4a2eb8c58a4fc4645bf4ce83d101936791a48dc20",
+                        "bytes":  1168665,
+                        "fileCount":  1
+                    },
+                    {
+                        "name":  "昔涟v1.1",
+                        "type":  "directory",
+                        "engine":  "ysm",
+                        "container":  "directory/ysm-raw-current",
+                        "sha256":  "e6467e9ca575333a6564e0e9b3254a2abc6bd74d89caaf1ec6bbe57b9668a800",
+                        "bytes":  2518546,
+                        "fileCount":  10
+                    },
+                    {
+                        "name":  "昔涟v1.1.ysm",
+                        "type":  "file",
+                        "engine":  "ysm",
+                        "container":  "ysgp-text-header",
+                        "sha256":  "bd037939149df2545e497493ed3417bf50d36bc093afb2f6893c0ee3982e9cda",
+                        "bytes":  743494,
+                        "fileCount":  1
+                    },
+                    {
+                        "name":  "小符玄",
+                        "type":  "directory",
+                        "engine":  "figura",
+                        "container":  "directory/figura-avatar",
+                        "sha256":  "3dedbb2132d1f160fcdbb6fa9defe9b4b59e1e588fdc56574e3b66fc3cc37b0e",
+                        "bytes":  16977404,
+                        "fileCount":  4
+                    },
+                    {
+                        "name":  "星屑海螺.ysm",
+                        "type":  "file",
+                        "engine":  "ysm",
+                        "container":  "ysgp-text-header",
+                        "sha256":  "ec655704357de42de1af06694402ac3d3fb968d0630838130c6861c457eb15c9",
+                        "bytes":  9703198,
+                        "fileCount":  1
+                    },
+                    {
+                        "name":  "艺方原版娘化 发光鱿鱼娘",
+                        "type":  "directory",
+                        "engine":  "ysm",
+                        "container":  "directory/ysm-raw-current",
+                        "sha256":  "fa0d67c162f4cc05d1e823d06eed7a8777ab60281cddff8b1ca63aaf8da67aeb",
+                        "bytes":  4378672,
+                        "fileCount":  15
+                    },
+                    {
+                        "name":  "银狼Lv.999v1.2.ysm",
+                        "type":  "file",
+                        "engine":  "ysm",
+                        "container":  "ysgp-text-header",
+                        "sha256":  "ff50e886cb6f47f31391e5bb555c909b7ce027d40876ccbce60b13848300a489",
+                        "bytes":  845888,
+                        "fileCount":  1
+                    }
+                ]
+}

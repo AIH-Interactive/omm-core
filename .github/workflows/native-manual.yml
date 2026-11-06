@@ -1,0 +1,96 @@
+name: OmniMorph native (manual)
+
+# Design-stage workflow. M1 supplies tools/build-native.ps1 and the native SDK.
+# Missing implementation is an explicit failure, never a successful empty build.
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: Native target to build
+        required: true
+        default: all
+        type: choice
+        options:
+          - all
+          - windows-x64
+          - linux-x64
+          - android-arm64
+          - macos-arm64
+          - macos-x64
+
+permissions:
+  contents: read
+
+jobs:
+  select:
+    runs-on: ubuntu-22.04
+    outputs:
+      matrix: ${{ steps.matrix.outputs.value }}
+    steps:
+      - id: matrix
+        shell: pwsh
+        env:
+          REQUESTED_TARGET: ${{ inputs.target }}
+        run: |
+          $targets = @(
+            @{ target = 'windows-x64'; runner = 'windows-2022' }
+            @{ target = 'linux-x64'; runner = 'ubuntu-22.04' }
+            @{ target = 'android-arm64'; runner = 'ubuntu-22.04' }
+            @{ target = 'macos-arm64'; runner = 'macos-15' }
+            @{ target = 'macos-x64'; runner = 'macos-15-intel' }
+          )
+          if ($env:REQUESTED_TARGET -ne 'all') {
+            $targets = @($targets | Where-Object { $_.target -eq $env:REQUESTED_TARGET })
+          }
+          if ($targets.Count -eq 0) {
+            throw 'No matching native target.'
+          }
+          $matrix = @{ include = $targets } | ConvertTo-Json -Compress -Depth 4
+          "value=$matrix" >> $env:GITHUB_OUTPUT
+
+  build:
+    needs: select
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.select.outputs.matrix) }}
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build, test and package the native SDK
+        shell: pwsh
+        env:
+          OMM_TARGET: ${{ matrix.target }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $entry = Join-Path $PWD 'tools/build-native.ps1'
+          if (-not (Test-Path -LiteralPath $entry)) {
+            throw 'Native implementation is pending: M1 must supply tools/build-native.ps1. See docs/OmniMorph-native-plan.md.'
+          }
+          # The entry provisions pinned tools/dependencies, checks host/target,
+          # runs foreground steps with per-step build.log, and emits a manifest.
+          & pwsh -NoProfile -File $entry -Target $env:OMM_TARGET -Configuration Release -OutputDirectory "dist/$env:OMM_TARGET" 2>&1 | Tee-Object -FilePath 'build.log'
+          $buildExitCode = $LASTEXITCODE
+          if ($buildExitCode -ne 0) {
+            Get-Content -LiteralPath 'build.log' -Tail 80
+            exit $buildExitCode
+          }
+          if (-not (Test-Path -LiteralPath "dist/$env:OMM_TARGET/manifest.json")) {
+            throw 'Build completed without the required artifact manifest.'
+          }
+      - name: Upload SDK
+        uses: actions/upload-artifact@v4
+        with:
+          name: omm-core-${{ matrix.target }}-${{ github.sha }}
+          path: dist/${{ matrix.target }}/
+          if-no-files-found: error
+      - name: Upload build logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: omm-logs-${{ matrix.target }}-${{ github.run_attempt }}
+          path: |
+            build.log
+            build/**/build.log
+            build/**/test-results.*
+          if-no-files-found: warn
