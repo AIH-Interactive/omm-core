@@ -1,6 +1,6 @@
 # OmniMorph Native API 设计
 
-日期：2026-11-06。状态：v0.1 设计草案，**尚未实现、尚未冻结 ABI**。本页中的接口是 M1–M5 的实现合同，不是当前可调用的 SDK。实施计划见 [OmniMorph native 计划](OmniMorph-native-plan.md)。
+日期：2026-11-06。状态：v0.1 设计草案，ABI 0.x 开发期。M1 已实现第 1–3 节的版本与 runtime 入口（[`include/omm/omm.h`](../include/omm/omm.h)），其余入口是 M2–M5 的实现合同。实施计划见 [OmniMorph native 计划](OmniMorph-native-plan.md)。
 
 ## 1. 命名与稳定边界
 

@@ -77,7 +77,7 @@
 | MSVC | MSVC 2022 | Visual Studio 18 Community（`18.10.12217.157`） | 基线改为“VS 2022 或更新”；本地使用 VS 18，CI `windows-latest` 用其自带版本，产物 manifest 记录实际编译器 |
 | Ninja | — | 未安装 | Windows 使用 Visual Studio generator |
 | JDK | 17/21/25 | `D:\Program Files\Java\17`（17.0.18）、`21`（21.0.9）、`25`（25.0.2） | 三版齐全，可做同一 DLL 加载验证 |
-| Python | — | 不可用（只有 Store 别名） | 构建与检查工具统一用 PowerShell |
+| Python | — | 3.13.12，需先激活 conda base（`D:/ProgramData/miniconda3`）；PATH 默认只有 Store 别名 | 构建入口保持 PowerShell；Python 只用作可选辅助工具 |
 | Linux/Android/macOS | 见计划第 7 节 | 本地不编译 | 由手动 CI 在 M1/M6 验证 |
 
 ## 6. 验收结果

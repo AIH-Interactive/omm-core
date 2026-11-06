@@ -193,7 +193,7 @@ CI 配置见 [`../.github/workflows/native-manual.yml`](../.github/workflows/nat
 
 ## 10. 当前状态与实施入口
 
-进度：M0 已完成，见 [M0 证据与契约](m0/M0-contract.md)。
+进度：M0 已完成，见 [M0 证据与契约](m0/M0-contract.md)；M1 已完成，见 [M1 构建与 ABI](m1/M1-build-abi.md)。
 
 本次已形成设计：双引擎、SIMD+GPU、native ysmparser、跨版本 ABI、平台矩阵和手动 CI。尚无 native 源码、编译结果、性能倍率或真实窗口 PASS。下一项是 M0 的互操作与格式契约核实，然后按 M1–M6 实施；不得直接跨过 API/语义确认开始大规模替换渲染器。
 

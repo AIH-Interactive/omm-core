@@ -1,0 +1,12 @@
+{
+    "schema": "omm-dependency-lock/1",
+    "comment": "Pinned third-party dependencies. M1 links no third-party code; JNI headers come from the build JDK and are not linked.",
+    "libraries": [],
+    "toolchains": {
+        "cmake": ">= 3.21",
+        "windows": "MSVC from Visual Studio 2022 or newer (local: Visual Studio 18)",
+        "android": "NDK r28c or newer, API 26",
+        "macos": "AppleClang, deployment target 13.0",
+        "java": "bridge compiled with --release 17; load-tested on 17/21/25"
+    }
+}
