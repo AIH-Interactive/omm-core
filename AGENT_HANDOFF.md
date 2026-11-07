@@ -1,5 +1,9 @@
 ## 当前有效交接（2026-11-07）：独立候选测试先行
 
+- 子智能体render_architecture_comparison已完成并交付docs/preview/OYSM-SPM-Acceleration-Architecture.md，约300行详细中文，含OYSM/SPM模型处理、CPU SIMD、常规GPU/Iris/portable路径、缓冲与生命周期、同omm-core对照和源码索引。主线程已审阅，diff --check通过；未运行参考项目或编造FPS。
+- 文档重要发现：SPM当前raw OpenGL builder生成pointer=0的mesh，因此native骨骼尝试实际走Java回退；portable路径另有native骨骼与fence快照。OYSM新增native源码已纳入，但其commit同附带二进制的构建映射未证实。OYSM/SPM显式128-bit float SIMD不同于当前double AVX2，不可简单移植数值/隐藏语义。
+- 生产集成检查点552efc2d24d9eab58a762deca477236c80060f7f已提交推送并核对；架构文档准备单独文档检查点。当前无活动构建/计时/子智能体任务。下一步仍为消费者回填成本与真实行为验证，目标未完成。
+
 - 当前最新operations-v11：生产桥首次native prepare验证固定(offset,count)，Java缓存成功范围；构造后私有parents/order不变，单线程重复帧跳过拓扑扫描/分配，多线程原校验分桶保留。仍逐帧检查句柄、范围、缓冲容量和local有限仿射。DLL/JAR均已重建PASS，私有JNI compose签名新增prepared标记，须配套使用新JAR/DLL。
 - v11四类新随机昔涟v1.1（582）、星屑海螺.ysm（1315）、AI Hobbyist Founder Public Server（195）、old.ysm（206），native对象+palette操作相对Java+3.94%/+0.53%/-1.18%/-4.75%；exit0，完整记录docs/preview/operations-v11。未全绿，无活动构建/计时。真实动画/脚本/剔除/实窗性能与正确性仍未验证。
 - 用户提供OYSM native源：https://github.com/OpenYSMDev/openysm.cpp，已克隆refs/openysm.cpp，commit3e86bb01b370ecf225d8d89442e6089840f999c5；refs受现有gitignore保护，未强行纳入主仓库。按用户要求生成CodeGraph，4文件/960节点/1875边，status up to date。已通知架构子智能体纳入分析，旧“只有二进制”限制已变化，但当前源commit与Java仓库内二进制的构建对应关系尚未证实。
