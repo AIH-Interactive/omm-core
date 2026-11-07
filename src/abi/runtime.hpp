@@ -9,10 +9,13 @@
 
 namespace omm::abi {
 
+class CpuExecutor;
+
 struct Runtime {
     omm_cpu_mode active_kernel = omm_cpu_scalar;
     uint32_t available_kernels = 0;
     uint32_t worker_count = 1;
+    std::shared_ptr<CpuExecutor> cpu_executor;
     uint64_t cpu_memory_budget = 0;
     uint64_t parse_max_file_bytes = 0;
     uint64_t parse_max_total_bytes = 0;

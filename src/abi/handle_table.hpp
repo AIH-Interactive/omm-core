@@ -18,6 +18,8 @@ namespace omm::abi {
 enum class HandleKind : uint8_t {
     runtime = 1,
     asset = 2,
+    model = 3,
+    instance = 4,
 };
 
 template <typename Object>

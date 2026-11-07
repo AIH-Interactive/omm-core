@@ -95,4 +95,48 @@ public final class NativeApi {
                                                      int outputOffset, int outputLength);
 
     public static native void omm_asset_release(long asset);
+
+    // ---- model/instance (ABI 0.3, optional set) ----
+    public static final int GEOMETRY_FIGURA = 1;
+    public static final int GEOMETRY_YSM = 2;
+    public static final int POSE_FULL = 1;
+    public static final int POSE_DELTA = 2;
+    public static final int PART_BYTES = 136;
+    public static final int VERTEX_BYTES = 36;
+    public static final int SURFACE_BYTES = 24;
+    public static final int MATERIAL_BYTES = 32;
+    public static final int PART_RESULT_BYTES = 304;
+
+    /**
+     * Native-order, aligned direct buffers containing the C leaf records, read from byte zero.
+     * Positions/limits are not advanced; zero counts allow null buffers. Creation copies inputs.
+     */
+    public static native long omm_model_create(long runtime, int profile, int partCount, ByteBuffer parts,
+            int vertexCount, ByteBuffer vertices, int indexCount, ByteBuffer indices,
+            int surfaceCount, ByteBuffer surfaces, int materialCount, ByteBuffer materials);
+
+    public static native long omm_model_create_from_asset(long runtime, long asset, int geometry,
+            ByteBuffer quadAlpha, int alphaCount, long memoryBudget);
+
+    /** Returns {profile, parts, vertices, indices, surfaces, materials}. */
+    public static native int[] omm_model_get_info(long model);
+
+    public static native void omm_model_release(long model);
+    public static native long omm_instance_create(long model);
+
+    /** Optional override buffers may be null; all other nonempty arrays are required. */
+    public static native void omm_instance_update(long instance, long revision, int mode, int partCount,
+            ByteBuffer partIds, ByteBuffer localMatrices, ByteBuffer visibility, ByteBuffer colors,
+            ByteBuffer uvMatrices, ByteBuffer materials);
+
+    public static native void omm_instance_query_parts(long instance, int count, ByteBuffer partIds, ByteBuffer output);
+
+    /** Writes transformed 36-byte vertices to output and returns the captured pose revision. */
+    public static native long omm_instance_transform_cpu(long instance, int kernel, int vertexCapacity, ByteBuffer output);
+
+    public static native void omm_instance_release(long instance);
+
+    /** 32-byte sort records (double center[3], uint64 ordinal); one semantic segment per call. */
+    public static native void omm_sort_back_to_front(long runtime, int count, ByteBuffer items,
+            ByteBuffer camera, ByteBuffer outputOrder);
 }

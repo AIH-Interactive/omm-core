@@ -1,4 +1,5 @@
 #include "abi/runtime.hpp"
+#include "abi/cpu_executor.hpp"
 
 #include <algorithm>
 #include <cstring>
@@ -108,6 +109,7 @@ OMM_API omm_status OMM_CALL omm_runtime_create(const omm_runtime_desc *desc,
             throw Failure(omm_error_unsupported, omm_stage_runtime, "requested cpu_mode is not available");
         }
         runtime->worker_count = desc->worker_count == 0u ? omm::abi::default_worker_count() : desc->worker_count;
+        runtime->cpu_executor = std::make_shared<omm::abi::CpuExecutor>(runtime->worker_count);
         runtime->cpu_memory_budget = desc->cpu_memory_budget == 0u ? omm::abi::kDefaultMemoryBudget : desc->cpu_memory_budget;
         runtime->parse_max_file_bytes =
             desc->parse_max_file_bytes == 0u ? omm::abi::kDefaultMaxFileBytes : desc->parse_max_file_bytes;

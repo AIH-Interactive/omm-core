@@ -11,6 +11,7 @@
 #include <vector>
 
 #include "omm/omm.h"
+#include "jni/model_jni.hpp"
 
 namespace {
 
@@ -453,6 +454,7 @@ extern "C" JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void *) {
             env->ExceptionClear();  // NoSuchMethodError: this bridge predates the method
         }
     }
+    omm::jni::register_model_methods(env, api_class);
     env->DeleteLocalRef(api_class);
     return JNI_VERSION_1_8;
 }

@@ -1,0 +1,186 @@
+#include <jni.h>
+
+#include <algorithm>
+#include <cmath>
+#include <exception>
+#include <mutex>
+#include <stdexcept>
+
+#include "abi/cpu_executor.hpp"
+#include "model/kernels.hpp"
+
+// Preview-only bridge for an unlit canonical mesh. It does not alter the public
+// pose API's invertible-normal contract: zero-scale visibility matrices are
+// valid for positions here.
+extern "C" JNIEXPORT void JNICALL Java_top_aihmc_omm_preview_PreviewNativeVertices_transform(
+    JNIEnv *env, jclass, jlong handle, jobject palette_buffer, jobject output_buffer) {
+    try {
+        const auto instance = omm::model::instance_table().get(static_cast<uint64_t>(handle), omm_stage_jni);
+        const std::lock_guard lock(instance->mutex);
+        const auto &model = *instance->model;
+        auto *palette = static_cast<const float *>(env->GetDirectBufferAddress(palette_buffer));
+        auto *output = static_cast<float *>(env->GetDirectBufferAddress(output_buffer));
+        if (palette == nullptr || output == nullptr ||
+            env->GetDirectBufferCapacity(palette_buffer) < static_cast<jlong>(model.parts.size() * 16) ||
+            env->GetDirectBufferCapacity(output_buffer) < static_cast<jlong>(model.vertices.size() * 5)) {
+            throw std::invalid_argument("preview vertex buffers must be direct and cover the mesh/palette");
+        }
+        std::vector<omm::model::PartPose> pose(model.parts.size());
+        for (size_t part = 0; part < pose.size(); ++part) {
+            for (size_t value = 0; value < 16; ++value) {
+                const float coordinate = palette[part * 16 + value];
+                if (!std::isfinite(coordinate)) {
+                    throw std::invalid_argument("preview palette contains a nonfinite coordinate");
+                }
+                pose[part].world[value] = coordinate;
+            }
+            if (!omm::model::is_finite_affine(pose[part].world)) {
+                throw std::invalid_argument("preview palette must be affine");
+            }
+        }
+        const auto &runtime = model.storage.runtime();
+        const auto vertices = omm::model::transform_vertices(
+            model, pose, runtime->active_kernel, runtime->worker_count, runtime->cpu_executor.get());
+        for (size_t vertex = 0; vertex < vertices.size(); ++vertex) {
+            for (size_t axis = 0; axis < 3; ++axis) {
+                output[vertex * 5 + axis] = vertices[vertex].position[axis];
+            }
+            output[vertex * 5 + 3] = vertices[vertex].uv[0];
+            output[vertex * 5 + 4] = vertices[vertex].uv[1];
+        }
+    } catch (const std::exception &failure) {
+        if (!env->ExceptionCheck()) {
+            if (const auto type = env->FindClass("java/lang/IllegalStateException")) {
+                env->ThrowNew(type, failure.what());
+                env->DeleteLocalRef(type);
+            }
+        }
+    }
+}
+
+extern "C" JNIEXPORT void JNICALL Java_top_aihmc_omm_preview_PreviewNativeVertices_compose(
+    JNIEnv *env, jclass, jlong handle, jint offset, jint count, jobject parents_buffer, jobject order_buffer,
+    jobject inverse_buffer, jobject local_buffer, jobject visible_buffer, jobject world_buffer,
+    jobject palette_buffer) {
+    try {
+        const auto instance = omm::model::instance_table().get(static_cast<uint64_t>(handle), omm_stage_jni);
+        const std::lock_guard lock(instance->mutex);
+        const auto total = instance->model->parts.size();
+        if (offset < 0 || count < 0 || static_cast<size_t>(offset) + static_cast<size_t>(count) > total) {
+            throw std::invalid_argument("preview skeleton range is invalid");
+        }
+        const auto records = [&](jobject buffer, size_t required) -> void * {
+            auto *data = env->GetDirectBufferAddress(buffer);
+            if (data == nullptr || env->GetDirectBufferCapacity(buffer) < static_cast<jlong>(required)) {
+                throw std::invalid_argument(
+                    "preview skeleton buffers must be direct and cover the requested range");
+            }
+            return data;
+        };
+        const auto *parents = static_cast<const int32_t *>(records(parents_buffer, total));
+        const auto *order = static_cast<const int32_t *>(records(order_buffer, total));
+        const auto *inverse = static_cast<const float *>(records(inverse_buffer, total * 16));
+        const auto *local =
+            static_cast<const float *>(records(local_buffer, static_cast<size_t>(count) * 16));
+        auto *visible = static_cast<uint8_t *>(records(visible_buffer, count));
+        auto *world_output = static_cast<float *>(records(world_buffer, static_cast<size_t>(count) * 16));
+        auto *palette_output = static_cast<float *>(records(palette_buffer, static_cast<size_t>(count) * 16));
+        std::vector<size_t> depth(count);
+        std::vector<bool> seen(count, false);
+        std::vector<std::vector<size_t>> levels;
+        size_t visited = 0;
+        for (size_t position = 0; position < total; ++position) {
+            const int32_t bone = order[position];
+            if (bone < offset || bone >= offset + count) {
+                continue;
+            }
+            const size_t index = static_cast<size_t>(bone - offset);
+            const int32_t parent = parents[bone];
+            if (seen[index] ||
+                (parent >= 0 && (parent < offset || parent >= offset + count || !seen[parent - offset]))) {
+                throw std::invalid_argument(
+                    "preview skeleton order must visit each parent before its children");
+            }
+            depth[index] = parent < 0 ? 0 : depth[parent - offset] + 1;
+            if (levels.size() <= depth[index]) {
+                levels.resize(depth[index] + 1);
+            }
+            levels[depth[index]].push_back(index);
+            seen[index] = true;
+            ++visited;
+        }
+        if (visited != static_cast<size_t>(count)) {
+            throw std::invalid_argument("preview skeleton order does not cover the requested range");
+        }
+        std::vector<omm::model::Matrix4> world(count);
+        const auto &runtime = instance->model->storage.runtime();
+        for (const auto &level : levels) {
+            runtime->cpu_executor->run(level.size(), [&](size_t task) {
+                const size_t index = level[task];
+                omm::model::Matrix4 matrix;
+                std::copy_n(local + index * 16, 16, matrix.begin());
+                if (!omm::model::is_finite_affine(matrix)) {
+                    throw std::invalid_argument("preview local pose is not finite affine");
+                }
+                const int32_t parent = parents[index + offset];
+                world[index] = parent < 0 ? matrix : omm::model::multiply(world[parent - offset], matrix);
+                visible[index] = visible[index] != 0 && (parent < 0 || visible[parent - offset] != 0);
+            });
+        }
+        runtime->cpu_executor->run(count, [&](size_t index) {
+            omm::model::Matrix4 bind;
+            std::copy_n(inverse + (index + offset) * 16, 16, bind.begin());
+            auto palette = omm::model::multiply(world[index], bind);
+            if (!visible[index]) {
+                palette = {};
+                palette[15] = 1;
+            }
+            for (size_t value = 0; value < 16; ++value) {
+                world_output[index * 16 + value] = static_cast<float>(world[index][value]);
+                palette_output[index * 16 + value] = static_cast<float>(palette[value]);
+            }
+        });
+    } catch (const std::exception &failure) {
+        if (!env->ExceptionCheck()) {
+            if (const auto type = env->FindClass("java/lang/IllegalStateException")) {
+                env->ThrowNew(type, failure.what());
+                env->DeleteLocalRef(type);
+            }
+        }
+    }
+}
+
+extern "C" JNIEXPORT jint JNICALL Java_top_aihmc_omm_preview_PreviewNativeDraw_submit(
+    JNIEnv *env, jclass, jlong bind_vertex_array, jlong bind_texture, jlong uniform_1i, jlong draw_elements,
+    jint vao, jint textured_uniform, jobject command_buffer, jint count) {
+    using BindVertexArray = void(JNICALL *)(uint32_t);
+    using BindTexture = void(JNICALL *)(uint32_t, uint32_t);
+    using Uniform1i = void(JNICALL *)(int32_t, int32_t);
+    using DrawElements = void(JNICALL *)(uint32_t, int32_t, uint32_t, const void *);
+    const auto *commands = static_cast<const int32_t *>(env->GetDirectBufferAddress(command_buffer));
+    if (count < 0 || commands == nullptr ||
+        env->GetDirectBufferCapacity(command_buffer) < int64_t(count) * 4 || bind_vertex_array == 0 ||
+        bind_texture == 0 || uniform_1i == 0 || draw_elements == 0) {
+        if (const auto type = env->FindClass("java/lang/IllegalArgumentException")) {
+            env->ThrowNew(type, "native GL submission requires valid entry points and direct draw commands");
+            env->DeleteLocalRef(type);
+        }
+        return 0;
+    }
+    const auto bind_vao = reinterpret_cast<BindVertexArray>(static_cast<uintptr_t>(bind_vertex_array));
+    const auto bind_tex = reinterpret_cast<BindTexture>(static_cast<uintptr_t>(bind_texture));
+    const auto set_uniform = reinterpret_cast<Uniform1i>(static_cast<uintptr_t>(uniform_1i));
+    const auto draw = reinterpret_cast<DrawElements>(static_cast<uintptr_t>(draw_elements));
+    bind_vao(static_cast<uint32_t>(vao));
+    jint submitted = 0;
+    for (jint index = 0; index < count; ++index) {
+        const auto *command = commands + index * 4;
+        bind_tex(0x0DE1, static_cast<uint32_t>(command[2])); // GL_TEXTURE_2D
+        set_uniform(textured_uniform, command[3]);
+        const auto byte_offset = static_cast<uintptr_t>(command[0]) * sizeof(uint32_t);
+        draw(0x0004, command[1], 0x1405,
+             reinterpret_cast<const void *>(byte_offset)); // TRIANGLES, UNSIGNED_INT
+        ++submitted;
+    }
+    return submitted;
+}

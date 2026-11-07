@@ -11,6 +11,7 @@
 #include "abi/handle_table.hpp"
 #include "abi/runtime.hpp"
 #include "ysmparser/asset_memory.hpp"
+#include "ysmparser/access.hpp"
 #include "ysmparser/json.hpp"
 #include "ysmparser/parse.hpp"
 #include "ysmparser/ysgp.hpp"
@@ -202,6 +203,14 @@ omm_handle publish(std::shared_ptr<abi::Runtime> runtime, std::unique_ptr<Asset>
 }
 
 } // namespace
+
+std::shared_ptr<const Asset> retain_asset(omm_handle handle, const abi::Runtime *runtime) {
+    auto object = asset_table().get(handle, omm_stage_model);
+    if (object->runtime.get() != runtime) {
+        throw abi::Failure(omm_error_argument, omm_stage_model, "asset belongs to a different runtime");
+    }
+    return std::shared_ptr<const Asset>(object, object->asset.get());
+}
 
 } // namespace omm::ysm
 

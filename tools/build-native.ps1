@@ -358,6 +358,7 @@ if ($runsTests) {
         $java = Join-Path (Join-Path $jdkHomes[$feature] 'bin') 'java'
         Invoke-Step -Name "jni-load-java$feature" -Command $java -Arguments @('-cp', $classPath, 'JniLoadTest', $library.FullName)
         Invoke-Step -Name "jni-parser-java$feature" -Command $java -Arguments @('-cp', $classPath, 'JniParserTest', $library.FullName, $currentFixture)
+        Invoke-Step -Name "jni-model-java$feature" -Command $java -Arguments @('-cp', $classPath, 'JniModelTest', $library.FullName, $currentFixture)
         $jniResults["java$feature"] = 'PASS'
     }
     foreach ($feature in @('17', '21', '25')) {

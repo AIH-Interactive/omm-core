@@ -35,11 +35,11 @@ extern "C" {
 #endif
 
 #define OMM_ABI_MAJOR 0u
-#define OMM_ABI_MINOR 2u
+#define OMM_ABI_MINOR 3u
 
 /* Schema/cache versions are independent of the ABI version. */
 #define OMM_ASSET_SCHEMA_VERSION 1u
-#define OMM_MESH_SCHEMA_VERSION 0u
+#define OMM_MESH_SCHEMA_VERSION 1u
 #define OMM_CACHE_VERSION 0u
 
 /* Unknown source offset in omm_error. */
@@ -86,6 +86,7 @@ typedef uint32_t omm_backend;
 #define omm_stage_runtime 2u
 #define omm_stage_jni 3u
 #define omm_stage_parse 4u
+#define omm_stage_model 5u
 
 typedef struct omm_bytes {
     const uint8_t *data;
@@ -271,6 +272,151 @@ OMM_API omm_status OMM_CALL omm_asset_read_resource(omm_handle asset, uint32_t r
                                                     uint64_t *out_written, omm_error *error);
 
 OMM_API omm_status OMM_CALL omm_asset_release(omm_handle asset, omm_error *error);
+
+/* Model inputs: Figura uses pixel units (1/16 block); YSM is already normalized to blocks.
+ * Bind translations follow the input profile. Pose updates always use block units. */
+#define omm_geometry_figura 1u
+#define omm_geometry_ysm 2u
+#define OMM_PART_ROOT UINT32_MAX
+#define OMM_MATERIAL_INHERIT UINT32_MAX
+#define omm_surface_alpha_unknown 1u
+#define omm_surface_translucent 2u
+#define omm_surface_double_sided 4u
+#define omm_surface_front_cull 8u
+
+typedef struct omm_part_desc {
+    uint32_t parent_id;
+    uint32_t reserved;
+    double local_bind[16];
+} omm_part_desc;
+
+typedef struct omm_vertex {
+    float position[3];
+    float normal[3];
+    float uv[2];
+    uint32_t part_id;
+} omm_vertex;
+
+typedef struct omm_surface_desc {
+    uint32_t first_index;
+    uint32_t index_count;
+    uint32_t material_id;
+    uint32_t flags;
+    uint64_t ordinal;
+} omm_surface_desc;
+
+/* Texture slots and semantic IDs are host-owned identifiers, never native GL names. */
+typedef struct omm_material_desc {
+    uint32_t semantic_id;
+    uint32_t primary_texture;
+    uint32_t secondary_texture;
+    uint32_t flags;
+    float alpha;
+    float emissive;
+    uint32_t light;
+    uint32_t overlay;
+} omm_material_desc;
+
+#define OMM_MODEL_DESC_VERSION 1u
+typedef struct omm_model_desc {
+    uint32_t struct_size;
+    uint32_t version;
+    uint32_t geometry_profile;
+    uint32_t part_count;
+    const omm_part_desc *parts;
+    uint32_t vertex_count;
+    uint32_t index_count;
+    const omm_vertex *vertices;
+    const uint32_t *indices;
+    uint32_t surface_count;
+    uint32_t material_count;
+    const omm_surface_desc *surfaces;
+    const omm_material_desc *materials;
+} omm_model_desc;
+
+#define OMM_BAKE_DESC_VERSION 1u
+#define omm_alpha_invisible 0u
+#define omm_alpha_opaque 1u
+#define omm_alpha_translucent 2u
+#define omm_alpha_unknown 3u
+typedef struct omm_bake_desc {
+    uint32_t struct_size;
+    uint32_t version;
+    uint32_t geometry_id;
+    uint32_t geometry_profile; /* 0 or omm_geometry_ysm */
+    const uint8_t *quad_alpha; /* optional explicit classification in asset quad order */
+    uint64_t quad_alpha_count;
+    uint64_t memory_budget; /* 0 = runtime budget; never exceeds the runtime budget */
+} omm_bake_desc;
+
+#define OMM_POSE_UPDATE_VERSION 1u
+#define omm_pose_full 1u
+#define omm_pose_delta 2u
+typedef struct omm_pose_update {
+    uint32_t struct_size;
+    uint32_t version;
+    uint64_t revision;
+    uint32_t mode;
+    uint32_t part_count;
+    const uint32_t *part_ids;
+    const double *local_matrices; /* part_count * 16, required unless count is zero */
+    const uint32_t *visibility;   /* optional, values 0/1 */
+    const float *colors;         /* optional, part_count * 4 */
+    const double *uv_matrices;   /* optional, part_count * 9 */
+    const uint32_t *materials;   /* optional, IDs or OMM_MATERIAL_INHERIT */
+} omm_pose_update;
+
+/* Fixed leaf output. Query validates every requested ID before writing any result. */
+typedef struct omm_part_result {
+    uint64_t revision;
+    double model_matrix[16];
+    double normal_matrix[9];
+    double uv_matrix[9];
+    float color[4];
+    uint32_t visible;
+    uint32_t material_id;
+} omm_part_result;
+
+#define OMM_MODEL_INFO_VERSION 1u
+typedef struct omm_model_info {
+    uint32_t struct_size;
+    uint32_t version;
+    uint32_t geometry_profile;
+    uint32_t part_count;
+    uint32_t vertex_count;
+    uint32_t index_count;
+    uint32_t surface_count;
+    uint32_t material_count;
+} omm_model_info;
+
+OMM_API omm_status OMM_CALL omm_model_create(omm_handle runtime, const omm_model_desc *desc,
+                                            omm_handle *out_model, omm_error *error);
+OMM_API omm_status OMM_CALL omm_model_create_from_asset(omm_handle runtime, omm_handle asset,
+                                                       const omm_bake_desc *desc, omm_handle *out_model,
+                                                       omm_error *error);
+OMM_API omm_status OMM_CALL omm_model_release(omm_handle model, omm_error *error);
+OMM_API omm_status OMM_CALL omm_model_get_info(omm_handle model, omm_model_info *out_info, omm_error *error);
+OMM_API omm_status OMM_CALL omm_instance_create(omm_handle model, omm_handle *out_instance, omm_error *error);
+OMM_API omm_status OMM_CALL omm_instance_update(omm_handle instance, const omm_pose_update *update, omm_error *error);
+OMM_API omm_status OMM_CALL omm_instance_query_parts(omm_handle instance, const uint32_t *part_ids, uint32_t count,
+                                                    omm_part_result *out_parts, omm_error *error);
+OMM_API omm_status OMM_CALL omm_instance_release(omm_handle instance, omm_error *error);
+
+/* Synchronous CPU transform of one immutable pose snapshot. Empty output queries vertex count.
+ * No graphics calls; insufficient capacity/failure leaves output vertices untouched. */
+OMM_API omm_status OMM_CALL omm_instance_transform_cpu(omm_handle instance, omm_cpu_mode kernel,
+                                                       omm_vertex *output, uint32_t capacity,
+                                                       uint32_t *out_required, uint64_t *out_revision,
+                                                       omm_error *error);
+
+typedef struct omm_sort_item {
+    double center[3];
+    uint64_t ordinal;
+} omm_sort_item;
+
+/* Sort only one host-approved semantic segment. Equal keys preserve input order. */
+OMM_API omm_status OMM_CALL omm_sort_back_to_front(omm_handle runtime, const omm_sort_item *items, uint32_t count,
+                                                  const double camera[3], uint32_t *out_order, omm_error *error);
 
 #ifdef __cplusplus
 }

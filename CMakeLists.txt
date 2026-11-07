@@ -81,6 +81,14 @@ add_library(omm_core_impl OBJECT
     src/abi/error.cpp
     src/abi/cpu_features.cpp
     src/abi/runtime.cpp
+    src/abi/cpu_executor.cpp
+    src/model/math.cpp
+    src/model/model.cpp
+    src/model/bake.cpp
+    src/model/api.cpp
+    src/model/kernels.cpp
+    src/model/sort.cpp
+    src/model/kernel_scalar.cpp
     src/ysmparser/decode.cpp
     src/ysmparser/crypto.cpp
     src/ysmparser/current_container.cpp
@@ -94,6 +102,18 @@ add_library(omm_core_impl OBJECT
     src/ysmparser/binary_mapper.cpp
     src/ysmparser/parse.cpp
     src/ysmparser/api.cpp)
+
+if(CMAKE_GENERATOR_PLATFORM MATCHES "^(ARM64|arm64)$" OR CMAKE_SYSTEM_PROCESSOR MATCHES "^(aarch64|arm64|ARM64)$")
+    target_sources(omm_core_impl PRIVATE src/model/kernel_neon.cpp)
+elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "^(AMD64|amd64|x86_64|X86_64)$" OR CMAKE_GENERATOR_PLATFORM STREQUAL "x64")
+    target_sources(omm_core_impl PRIVATE src/model/kernel_sse2.cpp src/model/kernel_avx2.cpp)
+    if(MSVC)
+        set_source_files_properties(src/model/kernel_avx2.cpp PROPERTIES COMPILE_OPTIONS /arch:AVX2)
+    else()
+        set_source_files_properties(src/model/kernel_sse2.cpp PROPERTIES COMPILE_OPTIONS -msse2)
+        set_source_files_properties(src/model/kernel_avx2.cpp PROPERTIES COMPILE_OPTIONS -mavx2)
+    endif()
+endif()
 target_include_directories(omm_core_impl
     PUBLIC
         "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
@@ -119,7 +139,8 @@ target_compile_options(omm_core PRIVATE ${omm_warning_flags})
 target_link_libraries(omm_core PRIVATE omm_zstd omm_miniz omm_yyjson omm_blake3 Threads::Threads)
 
 if(OMM_BUILD_JNI)
-    target_sources(omm_core PRIVATE src/jni/jni_bridge.cpp)
+    target_sources(omm_core PRIVATE src/jni/jni_bridge.cpp src/jni/model_jni.cpp
+        tools/preview/native/preview_vertices_jni.cpp tools/preview/native/preview_asset_jni.cpp)
     if(NOT ANDROID)
         # Only the JNI headers are needed; the library never links libjvm.
         if(DEFINED ENV{JAVA_HOME})
@@ -181,6 +202,22 @@ if(OMM_BUILD_TESTS)
     target_compile_options(omm_header_cpp_test PRIVATE ${omm_warning_flags})
     add_test(NAME omm_header_cpp_test COMMAND omm_header_cpp_test)
 
+    add_executable(omm_model_math_test tests/cpp/model_math_test.cpp)
+    target_link_libraries(omm_model_math_test PRIVATE omm_core_impl)
+    target_compile_options(omm_model_math_test PRIVATE ${omm_warning_flags})
+    add_test(NAME omm_model_math_test COMMAND omm_model_math_test)
+
+    add_executable(omm_model_test tests/cpp/model_test.cpp)
+    target_link_libraries(omm_model_test PRIVATE omm_core_impl)
+    target_compile_options(omm_model_test PRIVATE ${omm_warning_flags})
+    add_test(NAME omm_model_test COMMAND omm_model_test)
+
+    add_executable(omm_cpu_executor_test tests/cpp/cpu_executor_test.cpp)
+    target_link_libraries(omm_cpu_executor_test PRIVATE omm_core_impl)
+    target_compile_options(omm_cpu_executor_test PRIVATE ${omm_warning_flags})
+    add_test(NAME omm_cpu_executor_test COMMAND omm_cpu_executor_test)
+    set_tests_properties(omm_cpu_executor_test PROPERTIES TIMEOUT 15)
+
     add_executable(omm_parser_test tests/cpp/parser_test.cpp)
     target_link_libraries(omm_parser_test PRIVATE omm_core omm_yyjson)
     target_compile_options(omm_parser_test PRIVATE ${omm_warning_flags})
@@ -225,7 +262,7 @@ if(OMM_BUILD_TESTS)
     if(WIN32)
         # Test executables find omm_core.dll next to themselves.
         set_target_properties(omm_core omm_abi_test omm_header_cpp_test omm_crypto_test omm_ysm_decode_probe omm_ysm_asset_probe
-            omm_ysm_normalized_dump omm_parser_test omm_parallel_test omm_current_parser_test omm_ysm_stage_probe
+            omm_ysm_normalized_dump omm_parser_test omm_parallel_test omm_current_parser_test omm_ysm_stage_probe omm_model_math_test omm_model_test omm_cpu_executor_test
             PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
     endif()
 endif()
