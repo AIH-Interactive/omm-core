@@ -192,7 +192,10 @@ public final class PreviewFiguraParts {
                 nativeVertices.compose(offset, parts.length, world, palette, visible);
             for (int index = 0; index < parts.length; index++) {
                 // Save the same pivot-relative matrix after either Java or native world composition.
-                parts[index].savedPartToWorld.set(world[index]).translate(parts[index].pivot).scale(1f / 16);
+                Part part = parts[index];
+                part.savedPartToWorld.set(world[index]);
+                part.savedPivot.set(part.pivot);
+                part.savedPartToWorldNeedsConversion = true;
             }
         }
     }
@@ -212,6 +215,8 @@ public final class PreviewFiguraParts {
         private final Vector3f animRotation = new Vector3f();
         private final Vector3f animScale = new Vector3f(1);
         private final Matrix4f savedPartToWorld = new Matrix4f().scaling(1f / 16);
+        private final Vector3f savedPivot = new Vector3f();
+        private boolean savedPartToWorldNeedsConversion;
         public int lastAnimationPriority = Integer.MIN_VALUE;
         public int animationOverride;
         public boolean animated;
@@ -318,6 +323,10 @@ public final class PreviewFiguraParts {
 
         @LuaWhitelist
         public org.figuramc.figura.math.matrix.FiguraMat4 partToWorldMatrix() {
+            if (savedPartToWorldNeedsConversion) {
+                savedPartToWorld.translate(savedPivot).scale(1f / 16);
+                savedPartToWorldNeedsConversion = false;
+            }
             return org.figuramc.figura.math.matrix.FiguraMat4.of().set(savedPartToWorld);
         }
 

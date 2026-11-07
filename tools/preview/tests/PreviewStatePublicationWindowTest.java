@@ -4,11 +4,38 @@ import static org.lwjgl.glfw.GLFW.*;
 
 import java.nio.FloatBuffer;
 import java.nio.file.Path;
+import org.joml.Matrix4f;
 import org.lwjgl.opengl.GL;
 import org.lwjgl.system.MemoryUtil;
 
 /** Exercises real animation states and delayed consumers on a visible Windows GL context. */
 public final class PreviewStatePublicationWindowTest {
+    private static void checkPartQueries(PreviewAnimation.State state) throws ReflectiveOperationException {
+        if (state.lua() == null || state.lua().figura() == null) {
+            return;
+        }
+        var parts = state.lua().figura().parts;
+        var worldField = PreviewAnimation.State.class.getDeclaredField("world");
+        worldField.setAccessible(true);
+        var world = (Matrix4f[]) worldField.get(state);
+        for (int index = 0; index < parts.length; index++) {
+            var part = parts[index];
+            var pivot = part.getPivot();
+            var expected = new Matrix4f(world[index])
+                               .translate((float) pivot.x / 16, (float) pivot.y / 16, (float) pivot.z / 16)
+                               .scale(1f / 16);
+            // A script mutation before the first query must not alter the last submitted snapshot.
+            part.setPivot(pivot.x + 16, pivot.y, pivot.z);
+            var actual = part.partToWorldMatrix();
+            part.setPivot(pivot.x, pivot.y, pivot.z);
+            compare(FloatBuffer.wrap(actual.toMatrix4f().get(new float[16])),
+                FloatBuffer.wrap(expected.get(new float[16])), "part world snapshot");
+            actual.v14 += 100;
+            compare(FloatBuffer.wrap(part.partToWorldMatrix().toMatrix4f().get(new float[16])),
+                FloatBuffer.wrap(expected.get(new float[16])), "part world returned copy");
+        }
+    }
+
     private static void compare(FloatBuffer actual, FloatBuffer expected, String label) {
         for (int value = 0; value < expected.capacity(); value++) {
             float left = actual.get(value);
@@ -49,6 +76,7 @@ public final class PreviewStatePublicationWindowTest {
                 first.writePalette(scratch);
                 compare(scratch, expected, "deferred palette objects");
                 first.recordRenderedPivots();
+                checkPartQueries(first);
                 PreviewCpuVerticesTest.check(mesh, published, bridge);
                 first.postRender(time);
                 javaState.postRender(time);

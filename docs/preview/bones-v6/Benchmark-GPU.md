@@ -1,0 +1,26 @@
+# 独立实窗 Benchmark：GPU 路径
+
+真实 Windows GLFW/OpenGL 窗口；未启动 Minecraft，本结果与 Minecraft 实机性能分开。
+1280×720、VSync=0、120预热帧、5轮×600采样帧。同一JVM内按固定60Hz动画时钟重放，seed/相机由留存配置固定。
+
+CPU：CPU硬件未记录
+图形设备：3.3.0 NVIDIA 610.47; NVIDIA GeForce RTX 5060 Laptop GPU/PCIe/SSE2; VSync=0
+
+本文件汇总2个已完成案例；完整矩阵进度见Preview-plan.md。
+
+native末两列对照同一批次、场景、模型数量及CPU/GPU路径及焦点分组的Java基线：ΔFPS=native−Java，变化比例=ΔFPS/Java。绿为提升、红为下降；无对应基线记NA，Java行标基线。
+窗口焦点按每帧开始/结束的 GLFW_FOCUSED 快照记录，聚焦与失焦分组统计；旧日志标未记录，不能视作始终聚焦。分组采样帧数逐行列出。
+时间单位ms；平均FPS=采样帧数/采样总耗时。p50/p95/p99为帧耗时线性插值分位数。CPU路径仍由GPU绘制，GPU路径由shader变换顶点，NA表示该项不适用或查询不完整。
+骨骼耗时含多模型边界/视锥准备，提交包含上传。GPU计时仅模型Draw区间；Present为SwapBuffers调用耗时。内存为进程生命周期峰值工作集MiB，不含独立显存。
+
+native渲染仍在Java执行模型原Lua/Molang动画逻辑；native负责骨骼组合、CPU顶点或GPU Draw提交。Figura解析仍为Java。
+mixed场景保持同一模型来源池和相机；数量1仅绘制来源池首模型，仍加载整个池的共享资源。实际来源与布局见scene.json。
+沙箱内前后进程列表不代表整机；未取得宿主快照的案例标为未完整核查。后续另有15秒间隔宿主CIM快照，排除本例测量JVM后记录其他编译/测试进程；不终止其他会话。
+原始配置/进程/计时见D:/UserData/Desktop/Project/omm-core/build/preview/benchmark/bones-v6/render/cases、runs及host-process-samples.jsonl（未取得宿主快照时按未完整核查标注）。
+
+## 小符玄
+
+| 场景 | 数量 | 实现/线程 | 解析器 | 动画CPU | 骨骼CPU | 顶点CPU | 提交CPU | GPU绘制 | Present | Draw Call | 平均FPS | p50 | p95 | p99 | 峰值MiB | 可见/提交 | 其他编译测试进程 | 焦点 | 采样帧 | 相对Java ΔFPS | 相对Java变化 |
+|---|---:|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|---|---|---:|---:|---:|
+| single | 1 | java / 1 | java | 0.847 | 0.620 | NA | 0.051 | 0.018 | 0.643 | 1.000 | 403.42 | 2.247 | 4.291 | 5.667 | 759.9 | 1/1 | 未完整核查，可能影响结果 | 聚焦 | 3000 | 基线 | 基线 |
+| single | 1 | native / 1 | java | 0.801 | 0.579 | NA | 0.043 | 0.018 | 0.598 | 1.000 | 440.34 | 2.088 | 3.635 | 5.165 | 794.8 | 1/1 | 未完整核查，可能影响结果 | 聚焦 | 3000 | <span style="color: #008000">🟢 +36.92</span> | <span style="color: #008000">🟢 +9.15%</span> |

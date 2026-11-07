@@ -1,0 +1,62 @@
+[
+  {
+    "status": "complete",
+    "id": "figura-java-cpu-1",
+    "beforeProcesses": [],
+    "path": "cpu",
+    "implementation": "java",
+    "afterProcesses": [],
+    "run": "D:\\UserData\\Desktop\\Project\\omm-core\\build\\preview\\benchmark\\bones-v6\\render\\runs\\20261107-221023-110-31188",
+    "config": "D:\\UserData\\Desktop\\Project\\omm-core\\build\\preview\\benchmark\\bones-v6\\render\\cases\\figura-java-cpu-1-config.json",
+    "threads": 1,
+    "exitCode": 0,
+    "finishedUtc": "2026-11-07T13:10:33.6580142Z",
+    "startedUtc": "2026-11-07T13:10:21.9630208Z",
+    "name": "figura"
+  },
+  {
+    "status": "complete",
+    "id": "figura-java-gpu-1",
+    "beforeProcesses": [],
+    "path": "gpu",
+    "implementation": "java",
+    "afterProcesses": [],
+    "run": "D:\\UserData\\Desktop\\Project\\omm-core\\build\\preview\\benchmark\\bones-v6\\render\\runs\\20261107-221047-477-15924",
+    "config": "D:\\UserData\\Desktop\\Project\\omm-core\\build\\preview\\benchmark\\bones-v6\\render\\cases\\figura-java-gpu-1-config.json",
+    "threads": 1,
+    "exitCode": 0,
+    "finishedUtc": "2026-11-07T13:10:57.4526709Z",
+    "startedUtc": "2026-11-07T13:10:46.4542163Z",
+    "name": "figura"
+  },
+  {
+    "status": "complete",
+    "id": "figura-native-cpu-1",
+    "beforeProcesses": [],
+    "path": "cpu",
+    "implementation": "native",
+    "afterProcesses": [],
+    "run": "D:\\UserData\\Desktop\\Project\\omm-core\\build\\preview\\benchmark\\bones-v6\\render\\runs\\20261107-221034-973-31424",
+    "config": "D:\\UserData\\Desktop\\Project\\omm-core\\build\\preview\\benchmark\\bones-v6\\render\\cases\\figura-native-cpu-1-config.json",
+    "threads": 1,
+    "exitCode": 0,
+    "finishedUtc": "2026-11-07T13:10:46.1575471Z",
+    "startedUtc": "2026-11-07T13:10:33.9699912Z",
+    "name": "figura"
+  },
+  {
+    "status": "complete",
+    "id": "figura-native-gpu-1",
+    "beforeProcesses": [],
+    "path": "gpu",
+    "implementation": "native",
+    "afterProcesses": [],
+    "run": "D:\\UserData\\Desktop\\Project\\omm-core\\build\\preview\\benchmark\\bones-v6\\render\\runs\\20261107-221058-898-6860",
+    "config": "D:\\UserData\\Desktop\\Project\\omm-core\\build\\preview\\benchmark\\bones-v6\\render\\cases\\figura-native-gpu-1-config.json",
+    "threads": 1,
+    "exitCode": 0,
+    "finishedUtc": "2026-11-07T13:11:08.2412068Z",
+    "startedUtc": "2026-11-07T13:10:57.8422758Z",
+    "name": "figura"
+  }
+]

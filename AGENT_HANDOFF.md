@@ -1,3 +1,10 @@
+## 最新检查点（2026-11-07）：bones-v6 延迟脚本矩阵换算
+
+- 当前 main 基于已推送 109ef09。本轮生产仅 PreviewFiguraParts：每帧保存 world/pivot 独立快照，partToWorldMatrix 首次读取时才换算，返回副本不变；Java/native 共用。所有临时 profile 插桩及模型过滤已移除。
+- 实窗拆分模型3500骨骼：native 局部336.530 µs / compose含往返221.453 µs / saved109.263 µs；Java姿态含层级443.790 µs / saved76.503 µs。两次初版计数不完整或混入原版，保留日志但不作归因依据。
+- Build PASS；扩展实窗 State 测试 PASS：3500部件三时刻，首次查询前改pivot、返回副本修改、重复读取、两实例隔离、CPU/GPU shader一致性。初次private访问编译错误已修正为测试反射，日志build/preview/test-lazy-part-world.log。
+- bones-v6 Figura四组合各3000聚焦采样、可见/提交1、exit0；相对Java CPU -26.49 FPS/-7.12%，GPU +36.92 FPS/+9.15%。全部数据/清单/产物哈希在 docs/preview/bones-v6，原始帧在build/preview/benchmark/bones-v6/render。保留局部优化但整体未达标。
+- 下一最小任务拆分/减少compose打包回填约221µs；之后四类全矩阵重新验证。当前无活动构建/测试，不开始最终多模型，不恢复M3–M6，人工视觉MANUAL/PENDING。其他M3修改保留；本轮准备提交推送，以HEAD/远端核对为准。
 ## 最新检查点（2026-11-07）：Figura 平移候选未采用
 
 - 当前 main，已推送 6a2f8cb；本轮没有保留生产变更。JFR 实窗 Java/native 两例 exit 0；native Figura update identity 行 166 个顶层样本。日志含 PDH counter 不可用警告，保留，不推断整机负载。

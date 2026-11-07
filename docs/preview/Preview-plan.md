@@ -532,3 +532,6 @@ operations-v12 历史计时已完整归档，四类 native 仍慢于同契约 Ja
 
 ### 2026-11-07 bones-v5 候选未采用
 JFR 实窗指向 Figura 局部姿态初始化。translation 替换候选数值对照通过，但正式相对 Java CPU -5.94%、GPU -14.86%；已撤回源码并重建原版本，失败补丁与数据完整保留于 bones-v5。继续拆分姿态生成/JNI 成本，未开始最终多模型。
+
+### 2026-11-07 bones-v6 延迟脚本矩阵换算
+独立world/pivot快照保留，首次脚本查询才换算，实窗数值回归通过。Figura CPU相对Java -7.12%，GPU +9.15%，保留下降与局部优化，整体未达标。下一步compose往返成本，报告bones-v6/Report.md。
