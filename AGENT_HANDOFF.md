@@ -1,5 +1,22 @@
 # 当前交接：独立预览器优先，原 M3 流程暂停
 
+## 当前阶段：CPU/GPU分析完成，用户授权最小优化再测
+
+- session69070 exit0，含Figura三来源mixed1/5八例完成；随机总60 complete，3失败保留排除。test-figura-ysm-mixed-records.log验证真实mixed5：资源3、五个独立状态、native按来源java/native/native parser；CPU/GPU最终palette对照max_abs=5.06e-7。无活动测量会话。
+- docs/preview/Benchmark-analysis.md已按真实聚焦帧分别分析CPU/GPU及解析，并核对OpenYSM NativeModelRenderer/GpuRenderPath、Sparkle ModelRendererBridge/GpuRenderPath/native dllmain源码。没有运行Minecraft，也没有改参考库。
+- 用户明确授权找到原因后尝试优化再测，目标全绿；保留模型/画质/采样及所有慢成绩。分析首选CPU无光照路径多余完整属性/中转，其次GPU骨骼重复准备和CPU提交。完整矩阵20/50/100仍保留，当前先做单热点实验。
+- 下一步先保存本分析与60例报告检查点，推送/额度后开始CPU紧凑反馈：旧native/Java同输入微基准→只改变已证实的无光照额外工作/中转→数值对照→原真实模型同配置重测。生产完整法线/UV接口语义保持不变。不能把微基准当真实FPS或把GPU总FPS归为GPU算力。
+
+## 当前活动会话：69070（含Figura混合1/5）
+
+- session69070前台执行含Figura三来源mixed1/5四组合，mixed1 JavaCPU已完成并自动更新报告；继续前先轮询，不重复启动。最新额度周used40%、remaining60%。
+
+## G11检查点已推送 f3d2810，下一步含Figura混合场景
+
+- f3d28107bb4c86cfa2feddb0d1e67fa596f6f1fe 已推送origin/main，远端与本地一致。修复限两个states深拷贝语句及回归/结果记录；主M3仍未完成，已有修改保留。
+- 准备了figura-ysm-mixed五档配置，来源池是原sickle+原目录YSM+原加密YSM，不重新抽样。Figura保持原脚本/figura模式，两个YSM通过modelOptions明确clip idle/scripts=false；Measure脚本按各来源选择解析器，Java/native单线程CPU/GPU分开。
+- 本轮先测含Figura混合1/5；其后Figura同模型20/50/100和混合20/50/100及YSM100，仍逐例即时记录。不能把只含YSM的mixed成绩代替含Figura场景。
+
 ## 当前有效结果：Figura same-model1/5八组完成，G11检查点收尾
 
 - session88800已exit0，Figura same-model1/5八组各120预热+5×600采样完成，逐例自动写表；随机总52 complete，3 failed保留排除。当前无活动测量会话。
