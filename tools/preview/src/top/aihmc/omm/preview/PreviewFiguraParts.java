@@ -67,6 +67,15 @@ public final class PreviewFiguraParts {
                     return children;
                 }
             });
+            methods.set("partToWorldMatrix", new org.luaj.vm2.lib.OneArgFunction() {
+                @Override
+                public org.luaj.vm2.LuaValue call(org.luaj.vm2.LuaValue self) {
+                    // The virtual root has no pose; use the same model-unit conversion as real preview parts.
+                    return types
+                        .javaToLua(org.figuramc.figura.math.matrix.FiguraMat4.of().set(new Matrix4f().scaling(1f / 16)))
+                        .arg1();
+                }
+            });
             var metatable = new LuaTable();
             metatable.set("__index", methods);
             models.setmetatable(metatable);

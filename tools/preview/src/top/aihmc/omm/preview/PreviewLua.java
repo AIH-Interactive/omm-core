@@ -195,6 +195,7 @@ public final class PreviewLua implements AutoCloseable {
         globals.set("pings", new LuaTable());
         globals.set("client", PreviewClient.create(states));
         globals.set("player", PreviewSimulatedApi.player(states, types));
+        globals.set("host", PreviewConfiguredQueries.create(states, "host"));
         globals.set("world", PreviewWorldClock.create(states, () -> tick));
         types.generateMetatableFor(org.figuramc.figura.lua.api.particle.ParticleAPI.class);
         types.generateMetatableFor(org.figuramc.figura.lua.api.particle.LuaParticle.class);

@@ -55,6 +55,7 @@ final class PreviewSimulatedApi {
             if (kind != null)
                 add(api, configured, types, method, kind);
         }
+        PreviewConfiguredQueries.install(api, configured);
         return new ReadOnlyLuaTable(api);
     }
 

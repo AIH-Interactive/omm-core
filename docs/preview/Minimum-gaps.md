@@ -46,12 +46,23 @@ G01–G05 的最新构建成功，程序为 `build/preview/preview.jar`。专项
 |---|---|---|---|
 | G08 | 帧日志未记录窗口焦点，无法区分失焦数据 | 已补齐；真实窗口专项通过 | 2026-11-07：单/多模型记录帧首尾真实 GLFW 焦点快照，CSV 增加 window_focused；报告按聚焦/失焦/未记录分组，Java只匹配同焦点组。构建通过；PreviewWindowFocusTest 两个真实可见窗口转移焦点，CSV true/false 验证通过，日志 test-window-focus.log；单/多模型内置立方体各60帧实窗冒烟通过（test-focus-smoke-*.log），报告聚焦/失焦配对及红绿数值回归通过（test-report-focus.log）。未加载模型样本，不改变渲染或强抢生产窗口焦点。 |
 
+动画库集中调用分析、脚本版本/哈希、必经与条件分支见 [Figura 动画库脚本缺口分析](Figura-script-gaps.md)。
+
+## Figura 正式运行前已确认的必要参数适配
+
+| 编号 | 已确认调用 | 状态 | 最小范围与证据 |
+|---|---|---|---|
+| G09 | `host:isHost()`、`player:getVehicle/getHeldItem()`、`world.getBlockState()` | 已补齐；专项通过 | 原选样 EZAnims 的每 tick getInfo（364行起）无条件调用；配置明确提供 host布尔、无载具null、固定方块、空手物品对象及属性/查询返回值（getHeldItem在453/454行无条件调用）。只补公共配置值适配，不实现世界或实体状态机，不改模型。2026-11-07：PreviewConfiguredQueriesTest RED→GREEN；null载具、空手物品、固定方块、host布尔、新返回对象及原world时钟通过，未加载模型。日志 test-PreviewConfiguredQueriesTest-{red,green}.log。 |
+| G10 | 根级 `models:partToWorldMatrix()` | 已补齐；专项通过 | EZAnims:412 在每 tick 计算移动方向；复用现有真实矩阵类型及预览器根坐标约定，限根入口与无模型数值测试，不扩充相机/实体系统。2026-11-07：PreviewRootMatrixTest RED→GREEN，真实矩阵方向变换、1/16模型单位和返回副本隔离通过；日志 test-PreviewRootMatrixTest-{red,green}.log。 |
+
+上述必要性来自实际原脚本的无条件调用路径，不是因为API尚未实现就要求补齐全部宿主能力。此次只读取既有样本脚本文本，未重新加载或解析模型。
+
 ## 暂不实施的候选项
 
 | 候选项 | 当前证据 | 处理方式 |
 |---|---|---|
-| `host:isHost/isFlying` | 已有脚本引用，尚未证明当前配置下必经 | 待确认，暂不实现；若必需，优先显式模拟值 |
-| 物品、目标、载具查询 | 已有脚本引用，尚未证明当前配置下必经 | 待确认，暂不实现；先核对 OMP 调用及最小参数适配 |
+| `host:isHost/isFlying` | isHost已由每tick无条件调用证明必需；isFlying仅host分支 | isHost移至G09；isFlying仅按显式配置提供，不实现飞行状态机 |
+| 物品、目标、载具查询 | 载具查询已证明必需，移至G09；其余按原getInfo调用核对 | 仅必要配置返回值，不实现实体/库存系统 |
 
 若后续证据证明必须补充，先记录具体调用、配置模拟是否足够、OMP 对应实现和最小影响范围，再更新本表。
 

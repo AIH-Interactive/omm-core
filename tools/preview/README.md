@@ -294,3 +294,20 @@ java --enable-native-access=ALL-UNNAMED --sun-misc-unsafe-memory-access=allow -c
 按用户最新要求优先单线程：`Measure-Preview.ps1`默认只测Java1/native1的CPU/GPU。既有多个场景的8/16线程低于native单线程，后续多线程比较暂缓，报告记SKIPPED，不删除已完成结果。需要重新比较时显式传`-Threads 1,8,16`。
 
 `-SkipCompleted`按案例ID复用完整测量；程序、模型或配置改变后使用新的`-Name`或输出目录，避免把旧成绩误当新结果。单个被正常关闭但未满采样帧的窗口不会记为complete。
+
+## Figura 动画库的显式模拟查询
+
+`states.host` 与 `states.world` 的 `get*` / `is*` 成员可以声明固定查询返回值；`states.player` 同样支持额外的 null 或对象返回值。对象内部可包含普通属性和显式查询，方法调用返回新的只读 Lua 值。已有玩家标量/向量查询及 world 时钟仍使用原实现。示例为空手、无载具、脚下空气场景：
+
+```json
+{
+  "host": {"isHost": false},
+  "player": {
+    "getVehicle": null,
+    "getHeldItem": {"id": "minecraft:air", "getUseAction": "NONE", "tag": {}}
+  },
+  "world": {"getBlockState": {"id": "minecraft:air", "isSolidBlock": false}}
+}
+```
+
+将这些字段并入配置的 `states`，其余玩家快照仍需按脚本声明。上述固定结果不随调用参数变化，也不是 Minecraft 世界/物品实现。根 `models:partToWorldMatrix()` 使用现有预览器模型单位转换与真实 Figura 矩阵类型；完整游戏世界/载具姿态仍不在本适配范围。必要接口与条件分支见 [Figura 动画库分析](../../docs/preview/Figura-script-gaps.md)。

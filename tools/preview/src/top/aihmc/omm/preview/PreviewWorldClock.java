@@ -20,6 +20,7 @@ final class PreviewWorldClock {
         LuaTable api = new LuaTable();
         api.set("getTime", query(gameTime, tick));
         api.set("getTimeOfDay", query(dayTime, tick));
+        PreviewConfiguredQueries.install(api, world);
         return new ReadOnlyLuaTable(api);
     }
 

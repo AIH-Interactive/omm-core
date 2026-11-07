@@ -1,5 +1,33 @@
 # 当前交接：独立预览器优先，原 M3 流程暂停
 
+## 当前有效结果：Figura四组正式单模型完成，公共补充验收通过
+
+- session52891 exit0，random-figura-single-g08 Java/native1×CPU/GPU四组各120warmup+5×600sample完整通过，原sickle脚本开启，可见/提交均1；每组已立即写表。随机累计44 complete，之前2失败保留排除。当前无活动测量进程。
+- G09/G10各接口RED→GREEN，原完整动画库内存接线/60帧实际idle PASS；Files/Client/Metatables/ModelRoots四项相关回归全部PASS（test-figura-query-regression-*.log），不再重复加载模型。最后命令退出1仅因为读取不存在的figura-animation示例路径，不是测试失败；已改在README写实际配置说明。
+- 集中分析文档已记录原库版本/哈希、必经/条件分支及真实四组结果。README说明配置返回常量、null/对象及非Minecraft宿主边界。用户要求公共最小修复已完成，没有关闭脚本/改模型/搬状态机。
+- 本次检查点提交范围仅公共查询适配、根矩阵入口、相关测试/说明和已完成报告；主M3未完工作区保留。下一步优先Figura same-model五档与含Figura的混合场景，仍需100档等剩余正式矩阵；分析性能后再参考OpenYSM/Sparkle-Morpher做单线程最小优化。
+
+## G09/G10及完整原动画库接线已通过，优先Figura正式测量
+
+- G09配置常量查询接线已完成（host、player null/对象、world固定方块），保持原world时钟/已有typed player查询；G10根矩阵1/16模型单位与现有部件一致。两个接口分别RED→GREEN，每项通过即更新Minimum-gaps及集中分析文档。
+- canonical Build PASS，JAR已更新。原EZAnims/GSAnimBlend完整文本+实际内存Animation对象的初始化/60帧tick/render/postRender+idle:isPlaying PASS，test-animation-libraries.log；未加载模型。
+- sample-2及figura-same-model五档配置已显式声明host=false、无载具、双手空气/NONE/空tag、固定空气方块isSolidBlock=false。不增加游戏状态机，不处理当前条件不触发的目标/载具/原版姿态回调。
+- 下一步正式random-figura-single-g08四组合CPU/GPU×Java/native1，保留脚本；须记录实际session句柄与终态，不把内存原库测试当实窗模型PASS。新增修复尚未提交；先取得实窗证据后做最小回归与检查点。
+
+## 最新用户要求：集中分析动画库并记录缺口
+
+- 已完成原选样 EZAnims3.0.1（775行）、GSAnimBlend2.4.1（2271行）及8行script的静态宿主/元表/事件/动画调用核对；docs/preview/Figura-script-gaps.md 保存原始SHA256、调用行号、已支持/必经缺口/条件分支和配置边界，并由Minimum-gaps链接。
+- 先登记G09：host布尔、null载具、固定方块与空手物品对象的显式配置返回值；G10：根partToWorldMatrix。其余飞行/载具实体/目标实体/原版姿态混合回调均按真实分支记录，不自动实施。没有重新加载模型。
+- 已写未接入的PreviewConfiguredQueries草稿和两个无模型接口测试源码（ConfiguredQueries/RootMatrix）；还未运行RED或编译，不能记为完成。正式实现接线在集中分析记录后执行。现产品JAR仍为已推送G08版本。
+- session14283已exit0：50档same/mixed共8例完成，随机complete总40；每例已立即刷新报告。当前无活动测量。下一步先RED测试，G09/G10最小接线GREEN，再完整原库内存接线测试，随后优先Figura正式测量，不能只继续YSM。
+
+## 最新用户优先级：必须加入 Figura，不能仅测 YSM
+
+- 用户明确要求Figura加入正式测试。保留原随机sickle.zip及完整Lua，不换简单样本，不将YSM成绩代替Figura。
+- session14283在mixed50 nativeCPU运行，等待现有批次终态后优先运行 random-figura-single-g08（最新JAR已含G07根children与G08焦点），四组Java/native1×CPU/GPU；先不继续YSM100档。
+- 已准备figura-same-model-{1,5,20,50,100}.json，仍同一选样及显式states，未加载模型、未启动并行测量。Figura模型解析基线已有10次Java1记录，但不等于Lua/动画运行通过。
+- 新失败先按实际调用记录缺口再最小修复；不关闭脚本、不扩充Minecraft状态机。当前没有新的已证实必改项。
+
 ## 已确认推送：预览器代码检查点 9920235
 
 - 预览器及必要native依赖已提交99202357c616230f271df3dee50e9f7786afcc0d，并推送origin/main；git ls-remote确认远端HEAD与本地一致。用户授权不等待剩余测量先提交代码；不代表所有benchmark或主M3完成。
