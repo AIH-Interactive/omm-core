@@ -1,5 +1,38 @@
 # 当前交接：独立预览器优先，原 M3 流程暂停
 
+## P1本轮单模型实窗验证完成，准备提交
+
+- session74175 exit0，三类合计12例实窗完成，所有采样均3000聚焦帧，可见/提交1；数据在unlit-v1，未覆盖原random基线。相对同轮Java FPS：目录CPU619.25(-39.52/-6.00%) GPU1280.54(-52.36/-3.93%)；加密CPU1135.78(-60.32/-5.04%) GPU1055.35(-166.09/-13.60%)；FiguraCPU685.23(+66.75/+10.79%) GPU1035.49(+110.04/+11.89%)。仍未全绿。
+- 用户要求仅实窗后，已把新无窗口性能测试源码移入build/preview历史文件；正式新增PreviewUnlitVertexWindowTest无headless模式，真实可见窗口100k/3骨骼owner反射/非均匀/零缩放和UV对照PASS，test-unlit-visible-window.log。不再执行无窗口测试或微基准。
+- P1改动仅无光照CPU JNI桥，直接float位置/原UV输出，无生产完整法线/UV变换语义改变；GPU骨骼路径未修改。下一步提交推送本阶段/查询额度，然后单模型GPU骨骼准备实验；最终多模型等待全部路径优化完成。
+- 当前无活动测量/构建会话。根AGENTS实窗规则及测试顺序已更新。主M3未完文件保留，不纳入本提交。
+
+## 最新强制规则：测试仅用实窗测试（已写入根AGENTS）
+
+- 用户明确要求“写入agents，测试仅用实窗测试”。根AGENTS新增原意规则：所有后续测试/benchmark仅真实可见Windows窗口，不再运行无窗口测试或无窗口微基准；构建/编译不属于测试。历史无窗口记录保留，不作为最终实窗结论。
+- 优化期只单模型，原三类样本和CPU/GPU/Java/native1路径齐全后再最终多模型。每例立即记录并汇报相对Java FPS/百分比，优化前后native另列基线。
+- 当前无活动会话。P1三类12例实窗已完成，聚焦样本均3000且可见/提交1；native相对Java：目录CPU-6.00%/GPU-3.93%，加密CPU-5.04%/GPU-13.60%，FiguraCPU+10.79%/GPU+11.89%。需把本轮结果和规则纳入P1提交检查点，尚未提交优化代码。
+- 原100k窗口GPU对照最终PASS，覆盖三骨骼不同owner、反射/非均匀/零缩放；首次新增测试fixture因跨part三角形被真实API拒绝，修正fixture为每三顶点同part后PASS，未改生产模型校验。
+
+## 最新强制顺序：优化只测单模型，全部路径后再最终多模型
+
+- 用户明确：优化期间只用单模型，完成所有路径后再最终多模型。停止新增same-model/mixed中间测量，原数据保留为基线；单模型仍覆盖原YSM目录/加密YSM/Figura及CPU/GPU，单线程优先。
+- 当前session74175正依次补unlit-v1目录/加密样本的单模型四组合；不涉及多模型。继续前轮询同一会话，不并行构建/其他性能测试。Figura四组已完成，本轮三类合计目标12例。
+- P1全部三类实窗完成后记录并提交推送/额度；后续GPU骨骼/提交及解析优化也只用单模型，所有路径完成后再做最终1/5/20/50/100同模型及含Figura混合场景。
+
+## P1实窗Figura已完成，用户要求三类样本全部复测
+
+- session55965 exit0：unlit-v1 Figura单模型四组合各120预热+5×600聚焦帧完成。CPU Java618.47/native685.23，native相对同轮Java+66.75FPS/+10.79%；GPU Java925.45/native1035.49，相对+110.04/+11.89%。每例即时报告。只说明本样本，不宣称所有矩阵全绿。
+- 用户要求每轮实窗后汇报相对FPS和百分比，并明确YSM目录、加密YSM、Figura都测。接下来补同一原样本sample0/1的四组合，不重新抽样；输出仍unlit-v1，与原random基线分开。
+- CPU桥代码、性能测试、分析增量尚未提交；当前没有活动测量。三类实窗完成及必要检查后做P1检查点提交推送/额度，再继续GPU骨骼实验。其余20/50/100矩阵仍保留。
+
+## 性能实验P1：CPU无光照桥已优化，等待真实模型复测
+
+- 分析阶段已推送4b976325dd6b822b6be27ea9d3c7c61439b3dc53；推送后额度remaining60%。用户授权CPU/GPU都按benchmark分析、找到原因后优化再测，目标实际全绿。
+- 新PreviewVertexPerformanceTest不加载模型：旧实际JNI单线程10万顶点RED（Java0.323779/native1.630494ms）；最小改为float位置+原UV直接写出后GREEN（Java0.314886/native0.269921ms）。同位姿反射/非均匀/零缩放与UV对照通过。100k真实窗口GPU transform feedback对照也PASS。
+- 只改preview_vertices_jni.cpp的无光照transform桥：避免临时pose/full顶点结果和未使用法线/UV工作，保留有限仿射/溢出检查与执行器预算。生产完整C ABI变换未改。native单进程前台Release重建PASS，build-native-unlit.log。新源码/测试尚未提交。
+- 原混合69070已exit0，无其他活动测量。即将原sickle单模型四路径复测，输出build/preview/benchmark/unlit-v1，报告docs/preview/unlit-v1；原random基线保留。artifacts.json记录当前JAR/DLL SHA256。报告生成器在无解析数据时不生成空Parse报告。
+
 ## 当前阶段：CPU/GPU分析完成，用户授权最小优化再测
 
 - session69070 exit0，含Figura三来源mixed1/5八例完成；随机总60 complete，3失败保留排除。test-figura-ysm-mixed-records.log验证真实mixed5：资源3、五个独立状态、native按来源java/native/native parser；CPU/GPU最终palette对照max_abs=5.06e-7。无活动测量会话。

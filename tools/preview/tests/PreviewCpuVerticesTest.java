@@ -17,7 +17,7 @@ public final class PreviewCpuVerticesTest {
             throw new AssertionError(actual + " != " + expected);
     }
 
-    private static void check(PreviewMesh mesh, FloatBuffer palette, PreviewNativeVertices nativeVertices) {
+    static void check(PreviewMesh mesh, FloatBuffer palette, PreviewNativeVertices nativeVertices) {
         int vertices = mesh.owners.length;
         FloatBuffer cpu = MemoryUtil.memAllocFloat(mesh.vertices.length);
         FloatBuffer gpuResult = MemoryUtil.memAllocFloat(vertices * 4);

@@ -59,3 +59,15 @@
 4. 解析宿主绑定：若core之后的转换是主因，减少中间表示后load_ms下降、core_parse_ms近似不变；单独立项验证，不与渲染实验混改。
 
 每次先保留旧基线，再改一个变量，运行针对性数值对照及真实窗口同配置重测，逐例输出红绿比较。目标是实际提升；不删除失败/失焦/较慢成绩，不把微基准等同于真实模型FPS。
+
+## CPU实验 P1：无光照输出等价化（本轮完成）
+
+基线反馈命令：PreviewVertexPerformanceTest，10万自有顶点，实际JNI单线程，200轮预热后5轮×100调用，Java/native交替测量次序；校验反射/非均匀及零缩放位置、UV。旧路径median Java=0.323779、native=1.630494，慢5.036倍并触发RED；删除未使用法线/完整中间顶点数组后median Java=0.314886、native=0.269921，ratio=0.857，GREEN。微基准只证明该固定负载，不能替代模型FPS。
+
+实现仅修改预览器无光照JNI桥，直接使用传入float palette写位置/原UV，保留有限仿射与溢出检查以及原线程预算；生产完整法线/UV变换接口未修改。10万顶点真实窗口GPU transform-feedback对照通过（反射/非均匀与零缩放），日志test-vertex-unlit-gpu-parity.log。当前再测原sickle单模型四组合，独立结果目录unlit-v1，保留原基线不覆盖。
+
+### P1 三类单模型实窗结果
+
+12组各120预热+5×600聚焦采样帧，可见/提交均1；原图像、动画、模型、相机与采样参数保留。目录与加密样本分别沿用原seed42抽样，不换模型。结果独立保存在 [P1 CPU](unlit-v1/Benchmark-CPU.md) / [P1 GPU](unlit-v1/Benchmark-GPU.md)。相对同轮Java：目录CPU -6.00%、GPU -3.93%；加密CPU -5.04%、GPU -13.60%；Figura CPU +10.79%、GPU +11.89%。本轮尚未全绿，后续继续GPU骨骼/提交实验。
+
+三骨骼、10万不同owner顶点的真实窗口shader输出对照通过，涵盖反射、非均匀缩放、零缩放及原UV，日志test-unlit-visible-window.log。源无窗口微基准只保留为历史证据；用户要求测试仅用实窗后，已将其源移到build历史目录，新增的正式测试入口PreviewUnlitVertexWindowTest只创建真实窗口执行，没有无窗口模式。后续不再运行无窗口测试/微基准。

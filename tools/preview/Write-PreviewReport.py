@@ -295,6 +295,8 @@ def report_parse(root, destination):
                 rows[0]["bones"],
             ]
         )
+    if not groups:
+        return
     lines = [
         "# 单模型解析 Benchmark",
         "",

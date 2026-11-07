@@ -7,7 +7,7 @@
 #include <stdexcept>
 
 #include "abi/cpu_executor.hpp"
-#include "model/kernels.hpp"
+#include "model/model.hpp"
 
 // Preview-only bridge for an unlit canonical mesh. It does not alter the public
 // pose API's invertible-normal contract: zero-scale visibility matrices are
@@ -25,29 +25,40 @@ extern "C" JNIEXPORT void JNICALL Java_top_aihmc_omm_preview_PreviewNativeVertic
             env->GetDirectBufferCapacity(output_buffer) < static_cast<jlong>(model.vertices.size() * 5)) {
             throw std::invalid_argument("preview vertex buffers must be direct and cover the mesh/palette");
         }
-        std::vector<omm::model::PartPose> pose(model.parts.size());
-        for (size_t part = 0; part < pose.size(); ++part) {
+        for (size_t part = 0; part < model.parts.size(); ++part) {
+            omm::model::Matrix4 matrix;
             for (size_t value = 0; value < 16; ++value) {
-                const float coordinate = palette[part * 16 + value];
-                if (!std::isfinite(coordinate)) {
-                    throw std::invalid_argument("preview palette contains a nonfinite coordinate");
-                }
-                pose[part].world[value] = coordinate;
+                matrix[value] = palette[part * 16 + value];
             }
-            if (!omm::model::is_finite_affine(pose[part].world)) {
-                throw std::invalid_argument("preview palette must be affine");
+            if (!omm::model::is_finite_affine(matrix)) {
+                throw std::invalid_argument("preview palette must be finite affine");
             }
         }
+        // The shared preview shader consumes only positions and unchanged UVs. Match its
+        // float palette math directly, without computing unused normals or allocating a
+        // full production vertex array. The public model transform contract is unchanged.
         const auto &runtime = model.storage.runtime();
-        const auto vertices = omm::model::transform_vertices(
-            model, pose, runtime->active_kernel, runtime->worker_count, runtime->cpu_executor.get());
-        for (size_t vertex = 0; vertex < vertices.size(); ++vertex) {
-            for (size_t axis = 0; axis < 3; ++axis) {
-                output[vertex * 5 + axis] = vertices[vertex].position[axis];
+        constexpr size_t block_size = 256;
+        const size_t blocks = (model.vertices.size() + block_size - 1) / block_size;
+        runtime->cpu_executor->run(blocks, [&](size_t block) {
+            const size_t end = std::min((block + 1) * block_size, model.vertices.size());
+            for (size_t vertex = block * block_size; vertex < end; ++vertex) {
+                const auto &source = model.vertices[vertex];
+                const float *matrix = palette + source.part_id * 16;
+                const float x = source.position[0], y = source.position[1], z = source.position[2];
+                const float result_x = matrix[0] * x + matrix[4] * y + matrix[8] * z + matrix[12];
+                const float result_y = matrix[1] * x + matrix[5] * y + matrix[9] * z + matrix[13];
+                const float result_z = matrix[2] * x + matrix[6] * y + matrix[10] * z + matrix[14];
+                if (!std::isfinite(result_x) || !std::isfinite(result_y) || !std::isfinite(result_z)) {
+                    throw std::invalid_argument("preview transformed position exceeds finite float range");
+                }
+                output[vertex * 5] = result_x;
+                output[vertex * 5 + 1] = result_y;
+                output[vertex * 5 + 2] = result_z;
+                output[vertex * 5 + 3] = source.uv[0];
+                output[vertex * 5 + 4] = source.uv[1];
             }
-            output[vertex * 5 + 3] = vertices[vertex].uv[0];
-            output[vertex * 5 + 4] = vertices[vertex].uv[1];
-        }
+        });
     } catch (const std::exception &failure) {
         if (!env->ExceptionCheck()) {
             if (const auto type = env->FindClass("java/lang/IllegalStateException")) {

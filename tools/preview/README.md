@@ -311,3 +311,7 @@ java --enable-native-access=ALL-UNNAMED --sun-misc-unsafe-memory-access=allow -c
 ```
 
 将这些字段并入配置的 `states`，其余玩家快照仍需按脚本声明。上述固定结果不随调用参数变化，也不是 Minecraft 世界/物品实现。根 `models:partToWorldMatrix()` 使用现有预览器模型单位转换与真实 Figura 矩阵类型；完整游戏世界/载具姿态仍不在本适配范围。必要接口与条件分支见 [Figura 动画库分析](../../docs/preview/Figura-script-gaps.md)。
+
+## 当前实窗测试约束
+
+测试与 benchmark 仅使用真实可见 Windows 窗口；旧无窗口专项/微基准不再执行，历史记录不代替实窗验收。优化期间固定三类原抽样且只测单模型，所有 CPU/GPU 路径完成后再做最终多模型矩阵。当前新增数值验证入口为 `PreviewUnlitVertexWindowTest <omm_core.dll>`，它通过真实GPU transform-feedback核对无光照CPU输出。实际模型FPS使用 `Measure-Preview.ps1` 逐例记录；本轮结果见 [P1 CPU](../../docs/preview/unlit-v1/Benchmark-CPU.md) / [P1 GPU](../../docs/preview/unlit-v1/Benchmark-GPU.md)。
