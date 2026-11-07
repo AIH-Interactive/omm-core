@@ -47,6 +47,7 @@ final class PreviewMultiWindow {
             String clip = clips.isEmpty() ? config.animation.clip : clips.get(index % clips.size());
             var animation = animations.computeIfAbsent(clip, key -> {
                 var selected = PreviewConfig.JSON.fromJson(PreviewConfig.JSON.toJson(config), PreviewConfig.class);
+                selected.states = config.states.deepCopy();
                 selected.configFile = config.configFile;
                 selected.outputDirectory = config.outputDirectory;
                 selected.animation.clip = key;
@@ -76,6 +77,7 @@ final class PreviewMultiWindow {
 
     private static PreviewConfig sourceConfig(PreviewConfig config, String model, JsonObject options) {
         var json = PreviewConfig.JSON.toJsonTree(config).getAsJsonObject();
+        json.add("states", config.states.deepCopy());
         for (var entry : options.entrySet()) {
             if (entry.getKey().equals("clips"))
                 continue;

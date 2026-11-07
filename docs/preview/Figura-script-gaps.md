@@ -72,3 +72,7 @@ G09 只提供配置明确声明的常量查询返回值：布尔、null、字符
 正式 Figura 实窗测试随后执行，结果按组合写入 CPU/GPU 报告。
 
 正式运行结果：`random-figura-single-g08` 的 Java CPU、native CPU、Java GPU、native GPU 四组合均完成120预热+5×600采样帧，脚本保持开启，可见/提交均1；session52891退出0。每例完成后立即刷新 [CPU报告](random-single/Benchmark-CPU.md) / [GPU报告](random-single/Benchmark-GPU.md)。这证明当前显式静止/空手场景下原选样运行；不覆盖上表未触发的条件分支或所有Figura模型。
+
+多实例补充：首次 same-model1 测量证明配置序列化丢失显式 `getVehicle:null`；这属于配置复制问题，不是新增宿主API。G11 已用无模型测试复现并修复两个复制点的 states 深拷贝，专项通过，详见最小缺口表。多实例正式成绩仍需后续真实测量确认。
+
+G11 正式验收：Figura same-model1/5 共八组 Java/native1×CPU/GPU 实窗完整测量完成，session88800退出0。5实例共享一个geometry资源、4次纹理上传，五个状态身份和相位独立，native只建一个runtime；CPU/GPU最终Java/native骨骼palette均对照通过（最大绝对误差2.38e-7），证据 `test-figura-multi-records.log`。这只覆盖已测档位与当前动画配置，20/50/100及含Figura混合场景仍待完成。

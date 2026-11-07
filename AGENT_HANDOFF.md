@@ -1,5 +1,28 @@
 # 当前交接：独立预览器优先，原 M3 流程暂停
 
+## 当前有效结果：Figura same-model1/5八组完成，G11检查点收尾
+
+- session88800已exit0，Figura same-model1/5八组各120预热+5×600采样完成，逐例自动写表；随机总52 complete，3 failed保留排除。当前无活动测量会话。
+- test-figura-multi-records.log核对真实实窗输出：5实例共享geometry1/纹理上传4、五个独立状态/相位、native runtime1；CPU/GPU两条路径最终Java/native palette一致，max_abs=2.38e-7。没有重新解析或加载模型。
+- G11两个复制点各新增states深拷贝，ConfigNullTest RED→GREEN、构建PASS、上述实窗及数值验证PASS；缺口表和集中分析文档已更新。本检查点仅含这两行代码、对应测试及证据报告，不夹带主M3修改。
+- 下一最小任务：Figura20/50/100与含Figura混合场景，剩余YSM100；性能分项初查发现native顶点路径是每模型一次bulk JNI，并非逐顶点FFM调用。JNI适配每次建pose/full顶点结果并复制为5float输出，后续应读内核和OpenYSM/Sparkle-Morpher确认实际成本，再优化，不据此先改代码。
+
+## 当前测量会话：88800
+
+- session88800前台执行Figura same-model1/5四路径，id含nullfix；same-model1 JavaCPU已完成并立即报告。必须先轮询88800，不启动重复测量或并行编译测试。G11源改动尚未提交，等当前实窗证据后检查点提交推送。
+
+## G11已修：Figura多实例配置克隆保留显式null
+
+- 第一轮random-figura-same-model1 JavaCPU失败于EZAnims384，原生成配置确有getVehicle:null；静态路径确认sourceConfig和Source.newState的Gson克隆丢null。已先登记G11，PreviewConfigNullTest RED→GREEN，两个复制点仅增加states深拷贝，未增加宿主功能。
+- canonical Build PASS（build-config-null.log），JAR已更新；最小缺口表已立即记录，配置深拷贝隔离专项PASS。新增源改动2行+测试，尚未提交，不将专项视为实际多实例通过。
+- 接下来运行same-model1/5新id带nullfix，保留失败case且不计成绩，原脚本/样本/显式配置不变。上轮无活动进程；记录新session后从同一会话继续。
+
+## 已推送 Figura 公共补充检查点 c544673
+
+- c54467325c322319232b0f4ba46f6cc1183ff658 已提交推送origin/main，ls-remote与本地一致；14文件347新增行，限G09/G10、接口/原库测试、分析说明和44例已完成报告。主M3未完成文档/工具修改保留。
+- 推送后额度周used39%，remaining61%，未达交接阈值。根AGENTS使用规范已在d11e380推送。
+- 下一优先测量Figura same-model1/5（保留原脚本和显式状态、Java/native1×CPU/GPU）；其后20/50/100与含Figura混合场景。100档YSM仍未执行。不把解析或单模型通过当全部矩阵完成。
+
 ## 当前有效结果：Figura四组正式单模型完成，公共补充验收通过
 
 - session52891 exit0，random-figura-single-g08 Java/native1×CPU/GPU四组各120warmup+5×600sample完整通过，原sickle脚本开启，可见/提交均1；每组已立即写表。随机累计44 complete，之前2失败保留排除。当前无活动测量进程。

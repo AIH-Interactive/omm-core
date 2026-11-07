@@ -85,3 +85,9 @@ G01–G05 的最新构建成功，程序为 `build/preview/preview.jar`。专项
 ## 本次完成记录
 
 2026-11-07，G05 已完成实现与无模型加载的专项回归，并立即更新上表。本次额外发现的两个直接阻碍已在 G05 范围内解决：旧颜色适配器与真实 Vector3 同名，已统一真实向量并清除对应遗留编译类；迭代封装的局部 name 被 LuaJ 父类同名字段遮蔽，已改明确命名，`__pairs/__ipairs` 回归通过。没有启动真实模型窗口或重新抽样，最新真实模型端到端状态仍未验证，不记为 PASS。
+
+## Figura 多实例配置保留
+
+| 编号 | 已确认缺口 | 状态 | 最小处理与证据 |
+|---|---|---|---|
+| G11 | 多模型配置克隆丢失显式 null 查询 | 已补齐；专项通过 | 原测量配置仍有 getVehicle:null，same-model1 在 EZAnims:384 失败；Source.newState 使用字符串JSON克隆，sourceConfig同样经过Gson树转换。只在两个复制点保留 states 的实际深拷贝，不补宿主功能或把缺失值静默当null。2026-11-07：PreviewConfigNullTest RED→GREEN，显式null保留与深拷贝隔离通过；build-config-null.log/test-config-null-{red,green}.log。两个复制点各一处states深拷贝；随后Figura same-model1/5八组正式实窗通过，5实例共享/隔离及Java/native最终palette对照通过，最大绝对误差2.38e-7（test-figura-multi-records.log）。失败case保留。 |
