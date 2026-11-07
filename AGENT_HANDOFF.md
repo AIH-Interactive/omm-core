@@ -1,3 +1,11 @@
+## 最新检查点（2026-11-07）：bones-v4 实窗矩阵完成，仍未达标
+
+- 基于已推送 9f21f9f，本轮无生产代码改动；新增 PreviewStatePublicationWindowTest 实窗集成回归及 docs/preview/bones-v4 报告。
+- 复用 bones-v3 原抽样四类；16 个单模型 Java/native 单线程 CPU/GPU 组合均 exit 0，每组 120 预热 + 3000 聚焦采样，可见/提交 1。原始 CSV/config 在 build/preview/benchmark/bones-v4/render；报告包含 case-summary.json、sample.json、产物 SHA256。
+- 相对 Java FPS：ZZZ_Ellen_1 CPU +0.17% / GPU +6.70%；银狼 CPU -7.67% / GPU -28.49%；小符玄 CPU +5.97% / GPU -4.17%；old.ysm CPU +7.23% / GPU +1.41%。保留全部下降，未整体达标，最终多模型与主 M3–M6 均未开始。
+- 实窗 State 集成测试编译/执行 exit 0，日志 build/preview/test-state-publication-window.log。四资产每个加载一次，三时刻同桥两实例先更新后消费，验证独立缓冲、延迟 palette 对象同步、Java 对照与 CPU/GPU shader 顶点一致性。Figura 含原 Lua/原版骨骼；YSM 配置关闭 Lua，不宣称该分支已验证。人工视觉 MANUAL/PENDING。
+- 下一个最小任务：诊断银狼 GPU Present（Java 0.424 / native 0.610 ms）及 Figura 骨骼阶段差异，不把所有 FPS 差距归到矩阵。仍只真实可见窗口、单线程、单模型；不得删异常帧、改画质或开始多模型掩盖下降。
+- 当前 main，无活动测量/构建；本轮验证检查点准备提交推送，提交后以 HEAD 与远端核对为准。其他 M3 未提交修改完整保留。最近可靠周剩余 52%，banked reset 2 次，未使用。
 ## 最新续接检查点（2026-11-07）：palette 延迟回填待真实资产验证
 
 - 当前 main，前已推送架构文档检查点 4661d4e。本轮修改限预览器 State/NativeVertices/渲染消费者、操作计时入口和实窗骨骼测试；其余 M3 修改保留。

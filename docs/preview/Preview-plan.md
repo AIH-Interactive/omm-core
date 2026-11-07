@@ -526,3 +526,6 @@ operations-v2/v3：独立native预备上下文与SSE2候选计时完成，生产
 
 ### 2026-11-07 palette 延迟回填检查点
 operations-v12 历史计时已完整归档，四类 native 仍慢于同契约 Java。60 帧真实窗口骨骼/直接发布/CPU-GPU shader 数值验证 exit 0；State 包装和真实资产端到端尚待验证。后续仅实窗测试，整体优化及最终多模型未完成。详见 operations-v12/Report.md。
+
+### 2026-11-07 bones-v4 实窗集成验证
+16 组合完整、3000 聚焦帧/组，State 延迟同步与实例隔离真实资产实窗对照通过。目录 CPU/GPU +0.17%/+6.70%，银狼 -7.67%/-28.49%，Figura +5.97%/-4.17%，旧版 +7.23%/+1.41%，均相对 Java。仍未达标；继续定位 Present 与骨骼差异，不开始最终多模型。详见 bones-v4/Report.md。
