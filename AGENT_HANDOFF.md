@@ -1,5 +1,10 @@
 ## 当前有效交接（2026-11-07）：独立候选测试先行
 
+- 集成第一步已修改生产：CMakeLists.txt加入仅x64单独编译的tools/preview/native/preview_pose_avx.cpp/.hpp；preview_vertices_jni.cpp在既有拓扑校验后，以serial && runtime.active_kernel==omm_cpu_avx2分派完整整批循环。保留原句柄/锁、offset语义、world/palette对象回填、非AVX与多线程原路径。为兼容原inverse输入，用完整4×4乘法而非直接假定仿射。没有改公共C API或生产Java代码。
+- 构建PASS（build-integrated-pose-avx.log），生产DLL已重建/JAR未改。operations-v9四类新随机纳西妲1（93）、末影龙娘.ysm（409）、sickle.zip（52）、old.ysm（206）操作计时exit0，native完整compose_cycle相对Java+25.10%/+19.48%/+33.04%/+22.34%。报告/完整CSV/清单/哈希在docs/preview/operations-v9。保留下降；本轮未运行正确性或实窗，不能宣称画质/完整集成/FPS通过。
+- 下一最小任务继续完整组合集成：预校验固定元数据、每实例输出缓冲、减少palette回填/再次打包，保留world供脚本查询及palette供剔除；不可直接用共享native桥最后输出供多实例绘制。完整组合尚未接入，不能把v8操作收益套用生产。当前没有活动测试/构建。
+- 前检查点ef52e8b179d7c9e8551d3e8584c1d0440edb7b71已推送，本轮部分集成准备可恢复检查点。其他M3改动保留；额度最近周剩55%，reset2次未使用。
+
 - operations-v7/v8已完成exit0，无活动进程。独立AVX2编译单元pose_avx.cpp+CPUID/XGETBV检测；v7逐矩阵调用不稳定，v8整批骨骼循环+8-lane finite检查+向量化double→float输出为本轮最佳候选。保留双精度、单线程、finite/affine校验，无fast-math，生产未接入。
 - v8随机芙宁娜1（206骨骼）、绯英高模v1.0.ysm（151）、苍梧吟月Pro.zip（1319）、old.ysm（206）；batched_avx发布耗时相对同契约Java为-55.72%/-57.07%/-56.10%/-55.84%。完整原始CSV、manifest、报告与v8产物哈希在docs/preview/operations-v7/v8。Figura外部纹理缺失诊断保留，计时不证明画质。没有运行实窗。
 - 下一步选整批AVX2作为集成候选：先完成生产子范围offset、每实例输出/生命周期、非AVX路径决策，处理脚本world读取、剔除palette与CPU/GPU消费者，随后正确性与真实性能验证。不得把同缓冲契约操作收益当成现生产收益；原目标尚未完成。参考现有PreviewBoneWindowTest的offset/反向顺序覆盖，但用户当前候选阶段仅计时，实窗暂不启动。

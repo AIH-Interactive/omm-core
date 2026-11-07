@@ -141,6 +141,16 @@ target_link_libraries(omm_core PRIVATE omm_zstd omm_miniz omm_yyjson omm_blake3 
 if(OMM_BUILD_JNI)
     target_sources(omm_core PRIVATE src/jni/jni_bridge.cpp src/jni/model_jni.cpp
         tools/preview/native/preview_vertices_jni.cpp tools/preview/native/preview_asset_jni.cpp)
+    if(CMAKE_SYSTEM_PROCESSOR MATCHES "^(AMD64|amd64|x86_64|X86_64)$" OR CMAKE_GENERATOR_PLATFORM STREQUAL "x64")
+        target_sources(omm_core PRIVATE tools/preview/native/preview_pose_avx.cpp)
+        target_compile_definitions(omm_core PRIVATE OMM_PREVIEW_AVX2)
+        if(MSVC)
+            set_source_files_properties(tools/preview/native/preview_pose_avx.cpp PROPERTIES COMPILE_OPTIONS /arch:AVX2)
+        else()
+            set_source_files_properties(tools/preview/native/preview_pose_avx.cpp PROPERTIES
+                COMPILE_OPTIONS "-mavx2;-ffp-contract=off")
+        endif()
+    endif()
     if(NOT ANDROID)
         # Only the JNI headers are needed; the library never links libjvm.
         if(DEFINED ENV{JAVA_HOME})

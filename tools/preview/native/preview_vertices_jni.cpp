@@ -8,6 +8,9 @@
 
 #include "abi/cpu_executor.hpp"
 #include "model/model.hpp"
+#if defined(OMM_PREVIEW_AVX2)
+#include "preview_pose_avx.hpp"
+#endif
 
 namespace {
 
@@ -148,6 +151,13 @@ extern "C" JNIEXPORT void JNICALL Java_top_aihmc_omm_preview_PreviewNativeVertic
         if (visited != static_cast<size_t>(count)) {
             throw std::invalid_argument("preview skeleton order does not cover the requested range");
         }
+#if defined(OMM_PREVIEW_AVX2)
+        if (serial && runtime->active_kernel == omm_cpu_avx2) {
+            omm::preview::compose_avx2(instance->pose, offset, count, parents, order, inverse, local,
+                visible, world_output, palette_output);
+            return;
+        }
+#endif
         // This bridge owns a private instance and holds its mutex. Its existing
         // double world matrices provide per-instance scratch without a frame allocation.
         auto &pose = instance->pose;
