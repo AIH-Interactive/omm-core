@@ -21,6 +21,10 @@ final class PreviewNativeVertices implements AutoCloseable {
     private FloatBuffer localValues, worldValues, paletteValues, inverseBind;
     private IntBuffer parents, order;
     private ByteBuffer visibility;
+    private FloatBuffer publication;
+    private boolean published;
+    private record PreparedRange(int offset, int count) {}
+    private final ArrayList<PreparedRange> preparedRanges = new ArrayList<>();
 
     PreviewNativeVertices(PreviewMesh mesh, PreviewConfig config) {
         this(mesh, config, null);
@@ -97,21 +101,54 @@ final class PreviewNativeVertices implements AutoCloseable {
     }
 
     void compose(int offset, int count, Matrix4f[] localWorld, Matrix4f[] palette, boolean[] visible) {
+        if (threads == 1) {
+            prepareRange(offset, count);
+        }
         for (int bone = 0; bone < count; bone++) {
             localWorld[bone].get(bone * 16, localValues);
             visibility.put(bone, (byte) (visible[bone] ? 1 : 0));
         }
-        compose(
-            instance, offset, count, parents, order, inverseBind, localValues, visibility, worldValues, paletteValues);
+        FloatBuffer result = publication == null ? paletteValues : publication.slice(offset * 16, count * 16);
+        compose(instance, offset, count, parents, order, inverseBind, localValues, visibility, worldValues, result,
+            threads == 1);
         for (int bone = 0; bone < count; bone++) {
             localWorld[bone].set(bone * 16, worldValues);
-            palette[bone].set(bone * 16, paletteValues);
+            palette[bone].set(bone * 16, result);
             visible[bone] = visibility.get(bone) != 0;
         }
+        published = true;
+    }
+
+    private void prepareRange(int offset, int count) {
+        for (int index = 0; index < preparedRanges.size(); index++) {
+            PreparedRange range = preparedRanges.get(index);
+            if (range.offset() == offset && range.count() == count) {
+                return;
+            }
+        }
+        // These private metadata buffers are filled once in the constructor and never mutated.
+        prepare(instance, offset, count, parents, order);
+        preparedRanges.add(new PreparedRange(offset, count));
+    }
+
+    private static native void prepare(long instance, int offset, int count, IntBuffer parents, IntBuffer order);
+
+    void beginPublication(FloatBuffer output) {
+        if (publication != null) {
+            throw new IllegalStateException("A preview pose publication is already active");
+        }
+        publication = output;
+        published = false;
+    }
+
+    boolean endPublication() {
+        publication = null;
+        return published;
     }
 
     private static native void compose(long instance, int offset, int count, IntBuffer parents, IntBuffer order,
-        FloatBuffer inverseBind, FloatBuffer local, ByteBuffer visible, FloatBuffer world, FloatBuffer palette);
+        FloatBuffer inverseBind, FloatBuffer local, ByteBuffer visible, FloatBuffer world, FloatBuffer palette,
+        boolean prepared);
 
     void transform(FloatBuffer palette, FloatBuffer output) {
         transform(instance, palette, output);

@@ -31,6 +31,39 @@ omm::model::Matrix4 multiply_preview(const omm::model::Matrix4 &left, const floa
     return result;
 }
 
+std::vector<std::vector<size_t>> validate_order(const int32_t *parents, const int32_t *order,
+    size_t total, int32_t offset, int32_t count, bool serial) {
+    std::vector<size_t> depth(serial ? 0 : count);
+    std::vector<bool> seen(count, false);
+    std::vector<std::vector<size_t>> levels;
+    size_t visited = 0;
+    for (size_t position = 0; position < total; ++position) {
+        const int32_t bone = order[position];
+        if (bone < offset || bone >= offset + count) {
+            continue;
+        }
+        const size_t index = static_cast<size_t>(bone - offset);
+        const int32_t parent = parents[bone];
+        if (seen[index] ||
+            (parent >= 0 && (parent < offset || parent >= offset + count || !seen[parent - offset]))) {
+            throw std::invalid_argument("preview skeleton order must visit each parent before its children");
+        }
+        if (!serial) {
+            depth[index] = parent < 0 ? 0 : depth[parent - offset] + 1;
+            if (levels.size() <= depth[index]) {
+                levels.resize(depth[index] + 1);
+            }
+            levels[depth[index]].push_back(index);
+        }
+        seen[index] = true;
+        ++visited;
+    }
+    if (visited != static_cast<size_t>(count)) {
+        throw std::invalid_argument("preview skeleton order does not cover the requested range");
+    }
+    return levels;
+}
+
 } // namespace
 
 // Preview-only bridge for an unlit canonical mesh. It does not alter the public
@@ -93,10 +126,37 @@ extern "C" JNIEXPORT void JNICALL Java_top_aihmc_omm_preview_PreviewNativeVertic
     }
 }
 
+extern "C" JNIEXPORT void JNICALL Java_top_aihmc_omm_preview_PreviewNativeVertices_prepare(
+    JNIEnv *env, jclass, jlong handle, jint offset, jint count, jobject parents_buffer, jobject order_buffer) {
+    try {
+        const auto instance = omm::model::instance_table().get(static_cast<uint64_t>(handle), omm_stage_jni);
+        const std::lock_guard lock(instance->mutex);
+        const auto total = instance->model->parts.size();
+        if (offset < 0 || count < 0 || static_cast<size_t>(offset) + static_cast<size_t>(count) > total) {
+            throw std::invalid_argument("preview skeleton range is invalid");
+        }
+        const auto *parents = static_cast<const int32_t *>(env->GetDirectBufferAddress(parents_buffer));
+        const auto *order = static_cast<const int32_t *>(env->GetDirectBufferAddress(order_buffer));
+        if (parents == nullptr || order == nullptr ||
+            env->GetDirectBufferCapacity(parents_buffer) < static_cast<jlong>(total) ||
+            env->GetDirectBufferCapacity(order_buffer) < static_cast<jlong>(total)) {
+            throw std::invalid_argument("preview skeleton metadata must be direct and cover the model");
+        }
+        validate_order(parents, order, total, offset, count, true);
+    } catch (const std::exception &failure) {
+        if (!env->ExceptionCheck()) {
+            if (const auto type = env->FindClass("java/lang/IllegalStateException")) {
+                env->ThrowNew(type, failure.what());
+                env->DeleteLocalRef(type);
+            }
+        }
+    }
+}
+
 extern "C" JNIEXPORT void JNICALL Java_top_aihmc_omm_preview_PreviewNativeVertices_compose(
     JNIEnv *env, jclass, jlong handle, jint offset, jint count, jobject parents_buffer, jobject order_buffer,
     jobject inverse_buffer, jobject local_buffer, jobject visible_buffer, jobject world_buffer,
-    jobject palette_buffer) {
+    jobject palette_buffer, jboolean prepared) {
     try {
         const auto instance = omm::model::instance_table().get(static_cast<uint64_t>(handle), omm_stage_jni);
         const std::lock_guard lock(instance->mutex);
@@ -122,34 +182,11 @@ extern "C" JNIEXPORT void JNICALL Java_top_aihmc_omm_preview_PreviewNativeVertic
         auto *palette_output = static_cast<float *>(records(palette_buffer, static_cast<size_t>(count) * 16));
         const auto &runtime = instance->model->storage.runtime();
         const bool serial = runtime->worker_count == 1;
-        std::vector<size_t> depth(serial ? 0 : count);
-        std::vector<bool> seen(count, false);
         std::vector<std::vector<size_t>> levels;
-        size_t visited = 0;
-        for (size_t position = 0; position < total; ++position) {
-            const int32_t bone = order[position];
-            if (bone < offset || bone >= offset + count) {
-                continue;
-            }
-            const size_t index = static_cast<size_t>(bone - offset);
-            const int32_t parent = parents[bone];
-            if (seen[index] ||
-                (parent >= 0 && (parent < offset || parent >= offset + count || !seen[parent - offset]))) {
-                throw std::invalid_argument(
-                    "preview skeleton order must visit each parent before its children");
-            }
-            if (!serial) {
-                depth[index] = parent < 0 ? 0 : depth[parent - offset] + 1;
-                if (levels.size() <= depth[index]) {
-                    levels.resize(depth[index] + 1);
-                }
-                levels[depth[index]].push_back(index);
-            }
-            seen[index] = true;
-            ++visited;
-        }
-        if (visited != static_cast<size_t>(count)) {
-            throw std::invalid_argument("preview skeleton order does not cover the requested range");
+        // The private Java bridge caches only ranges validated by prepare(), and never
+        // modifies its copied parents/order buffers after construction.
+        if (!serial || !prepared) {
+            levels = validate_order(parents, order, total, offset, count, serial);
         }
 #if defined(OMM_PREVIEW_AVX2)
         if (serial && runtime->active_kernel == omm_cpu_avx2) {

@@ -134,6 +134,19 @@ public final class PreviewPoseOperationBenchmark {
                 case 9 -> publish(3);
                 case 10 -> publish(4);
                 case 11 -> publish(5);
+                case 12 -> {
+                    compose(0);
+                    pack(true);
+                }
+                case 13 -> {
+                    bridge.beginPublication(output);
+                    try {
+                        compose(1);
+                    } finally {
+                        bridge.endPublication();
+                    }
+                    consumed = output.get(output.capacity() - 4);
+                }
                 default -> throw new IllegalArgumentException("Unknown operation");
             }
         }
@@ -155,7 +168,8 @@ public final class PreviewPoseOperationBenchmark {
         String[] operations = {"java_compose_cycle", "native_compose_cycle", "java_nio_pack",
             "candidate_direct_pack", "candidate_prepared_cycle", "candidate_simd_cycle",
             "java_publish", "candidate_direct_publish", "candidate_affine_publish",
-            "candidate_checked_simd_publish", "candidate_avx_publish", "candidate_batched_avx_publish"};
+            "candidate_checked_simd_publish", "candidate_avx_publish", "candidate_batched_avx_publish",
+            "java_objects_and_palette", "native_objects_and_palette"};
         try (var report = new PrintWriter(Files.newBufferedWriter(Path.of(args[2])))) {
             report.println("kind,bones,operation,round,iterations,ns_per_operation");
             report.flush();

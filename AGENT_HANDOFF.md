@@ -1,5 +1,14 @@
 ## 当前有效交接（2026-11-07）：独立候选测试先行
 
+- 当前最新operations-v11：生产桥首次native prepare验证固定(offset,count)，Java缓存成功范围；构造后私有parents/order不变，单线程重复帧跳过拓扑扫描/分配，多线程原校验分桶保留。仍逐帧检查句柄、范围、缓冲容量和local有限仿射。DLL/JAR均已重建PASS，私有JNI compose签名新增prepared标记，须配套使用新JAR/DLL。
+- v11四类新随机昔涟v1.1（582）、星屑海螺.ysm（1315）、AI Hobbyist Founder Public Server（195）、old.ysm（206），native对象+palette操作相对Java+3.94%/+0.53%/-1.18%/-4.75%；exit0，完整记录docs/preview/operations-v11。未全绿，无活动构建/计时。真实动画/脚本/剔除/实窗性能与正确性仍未验证。
+- 用户提供OYSM native源：https://github.com/OpenYSMDev/openysm.cpp，已克隆refs/openysm.cpp，commit3e86bb01b370ecf225d8d89442e6089840f999c5；refs受现有gitignore保护，未强行纳入主仓库。按用户要求生成CodeGraph，4文件/960节点/1875边，status up to date。已通知架构子智能体纳入分析，旧“只有二进制”限制已变化，但当前源commit与Java仓库内二进制的构建对应关系尚未证实。
+
+- 本轮生产Java已接每Animation.State独立palette直接缓冲：NativeVertices.begin/endPublication按offset写入当前状态，Main/ModelRenderer直接传缓冲给CPU变换或GPU上传；world/palette矩阵对象仍同步，保留脚本/剔除接口。JVM拥有状态缓冲，不归共享renderer最后一次结果。预备元数据及减少对象回填尚未完成。
+- JAR重建PASS（build-direct-palette-java.log），DLL沿用v9。operations-v10新随机12_little（153）、拉菲2兔女郎.ysm（419）、苍梧吟月Pro.zip（1319）、old.ysm（206）；native_objects_and_palette相对同契约Java+7.82%/+6.81%/+16.23%/+9.91%，全部仍下降。报告/CSV/manifest/哈希在docs/preview/operations-v10；exit0，无活动测量。该操作测试覆盖JNI指定缓冲，但未验证State包装与实窗消费者端到端行为。
+- 用户明确要求子智能体详细分析OYSM/SPM的GPU/SIMD模型处理架构并与当前项目对照；已委派render_architecture_comparison，独占docs/preview/OYSM-SPM-Acceleration-Architecture.md，不改代码、不自行提交。主线程负责合并记录和检查点。
+- 前检查点aa45b01d39b01adcaaaf7ac9b2efd388cb684def已推送。本轮部分集成尚待检查点；整体未达标、画质/实窗性能未验证，其他M3改动保留。
+
 - 集成第一步已修改生产：CMakeLists.txt加入仅x64单独编译的tools/preview/native/preview_pose_avx.cpp/.hpp；preview_vertices_jni.cpp在既有拓扑校验后，以serial && runtime.active_kernel==omm_cpu_avx2分派完整整批循环。保留原句柄/锁、offset语义、world/palette对象回填、非AVX与多线程原路径。为兼容原inverse输入，用完整4×4乘法而非直接假定仿射。没有改公共C API或生产Java代码。
 - 构建PASS（build-integrated-pose-avx.log），生产DLL已重建/JAR未改。operations-v9四类新随机纳西妲1（93）、末影龙娘.ysm（409）、sickle.zip（52）、old.ysm（206）操作计时exit0，native完整compose_cycle相对Java+25.10%/+19.48%/+33.04%/+22.34%。报告/完整CSV/清单/哈希在docs/preview/operations-v9。保留下降；本轮未运行正确性或实窗，不能宣称画质/完整集成/FPS通过。
 - 下一最小任务继续完整组合集成：预校验固定元数据、每实例输出缓冲、减少palette回填/再次打包，保留world供脚本查询及palette供剔除；不可直接用共享native桥最后输出供多实例绘制。完整组合尚未接入，不能把v8操作收益套用生产。当前没有活动测试/构建。

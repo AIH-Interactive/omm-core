@@ -2,6 +2,8 @@ package top.aihmc.omm.preview;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -186,6 +188,8 @@ final class PreviewAnimation implements AutoCloseable {
         private final YsmBonePose[] lastFinite = new YsmBonePose[skeleton.names.length];
         private final Matrix4f[] world = new Matrix4f[skeleton.names.length];
         final Matrix4f[] palette = new Matrix4f[skeleton.names.length];
+        private FloatBuffer publishedPalette;
+        private boolean publishedPaletteReady;
         private final boolean[] defaults = mesh.figuraParts == null
             ? YsmVisibilityDefaults.visibility(mesh, host, false)
             : skeleton.defaultVisible.clone();
@@ -423,6 +427,31 @@ final class PreviewAnimation implements AutoCloseable {
         }
 
         void updateBones(PreviewNativeVertices nativeVertices) {
+            publishedPaletteReady = false;
+            if (nativeVertices == null) {
+                updateBoneMatrices(null);
+                return;
+            }
+            if (publishedPalette == null) {
+                // JVM-owned storage belongs to this animation state, not the shared model renderer.
+                publishedPalette = ByteBuffer.allocateDirect(Math.multiplyExact(palette.length, 64))
+                                       .order(ByteOrder.nativeOrder()).asFloatBuffer();
+                writePalette(publishedPalette);
+            }
+            nativeVertices.beginPublication(publishedPalette);
+            boolean written;
+            try {
+                updateBoneMatrices(nativeVertices);
+            } finally {
+                written = nativeVertices.endPublication();
+            }
+            if (!written) {
+                writePalette(publishedPalette);
+            }
+            publishedPaletteReady = true;
+        }
+
+        private void updateBoneMatrices(PreviewNativeVertices nativeVertices) {
             if (mesh.figuraParts != null) {
                 if (lua != null) {
                     lua.figura().update(world, palette, nativeVertices, 0);
@@ -498,6 +527,14 @@ final class PreviewAnimation implements AutoCloseable {
                 output.put(matrix.m30()).put(matrix.m31()).put(matrix.m32()).put(matrix.m33());
             }
             output.flip();
+        }
+
+        FloatBuffer paletteBuffer(FloatBuffer scratch) {
+            if (publishedPaletteReady) {
+                return publishedPalette;
+            }
+            writePalette(scratch);
+            return scratch;
         }
 
         private YsmBonePose weighted(YsmBonePose pose, float weight) {

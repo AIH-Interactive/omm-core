@@ -114,14 +114,13 @@ final class PreviewModelRenderer implements AutoCloseable {
     }
 
     int draw(int program, Matrix4f transform, PreviewAnimation.State state, FrameLog log, FrameLog.Frame frame) {
-        if (state != null)
-            state.writePalette(paletteValues);
+        FloatBuffer framePalette = state == null ? paletteValues : state.paletteBuffer(paletteValues);
         if (cpu) {
             long start = System.nanoTime();
             if (nativeVertices == null)
-                PreviewCpuVertices.transform(mesh.vertices, mesh.owners, paletteValues, cpuValues);
+                PreviewCpuVertices.transform(mesh.vertices, mesh.owners, framePalette, cpuValues);
             else
-                nativeVertices.transform(paletteValues, cpuValues);
+                nativeVertices.transform(framePalette, cpuValues);
             frame.verticesMs = Math.max(0, frame.verticesMs) + (System.nanoTime() - start) / 1e6;
         }
         long start = System.nanoTime();
@@ -136,7 +135,7 @@ final class PreviewModelRenderer implements AutoCloseable {
             glBufferSubData(GL_ARRAY_BUFFER, 0, cpuValues);
         } else {
             glBindBuffer(GL_TEXTURE_BUFFER, paletteBuffer);
-            glBufferSubData(GL_TEXTURE_BUFFER, 0, paletteValues);
+            glBufferSubData(GL_TEXTURE_BUFFER, 0, framePalette);
         }
         glActiveTexture(GL_TEXTURE0);
         glUniform1i(glGetUniformLocation(program, "modelTexture"), 0);

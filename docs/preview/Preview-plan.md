@@ -514,6 +514,8 @@ P2单线程骨骼顺序执行已构建并通过60帧实窗数值/shader对照；
 真实窗口细分确认JNI内部占骨骼桥接主要耗时；最小复用预览私有instance的double world存储，移除全部临时插桩后构建及60帧实窗对照PASS。新随机四类16组合完整，仍未全绿，结果与失败见Benchmark-analysis.md/bones-v3。下一步分析骨骼实际调用频次及Java直接父world TRS与native local+compose的结构差异；最终多模型和主M3–M6尚未开始。
 
 ### 独立候选验证先行（2026-11-07）
+operations-v11：首次native范围预校验并缓存后，四类对象+palette操作相对Java+3.94%/+0.53%/-1.18%/-4.75%，仍未总体达标。生产DLL/JAR配套重建；保持单线程优先，真实行为/实窗验收未完成。OYSM native源码已按用户授权加入refs/openysm.cpp并建立CodeGraph，供架构子智能体分析。
+operations-v10：每状态palette缓冲接入Main/ModelRenderer，保留对象回填；Java构建和生产JNI指定输出缓冲操作计时完成，但四类仍慢于同契约Java约7%～16%。预备元数据、端到端正确性与实窗性能待继续。用户另委派子智能体编写OYSM/SPM GPU/SIMD架构对比文档。
 operations-v9为生产集成第一步：预览JNI单线程AVX2整批内核已接入且构建/无窗口计时完成，完整组合未接完。保留原拓扑校验和矩阵回填时，四类更新周期仍慢于Java19%～33%。预备元数据、每实例直接缓冲及生产消费者适配继续实施；正确性/画质/实窗FPS未验证，整体阶段不标DONE。
 operations-v7/v8：整批AVX2 double姿态发布为当前优先集成候选；v8四类同缓冲契约相对Java耗时-55.72%/-57.07%/-56.10%/-55.84%。尚未接入生产；子范围、实例生命周期、world/palette消费者及实际FPS仍待验证，不标记整体完成。
 operations-v4/v5/v6：增加同world/palette/visibility缓冲契约的发布计时，独立组合直接发布、SSE2仿射运算和向量化finite校验。v6四类相对Java耗时-12.32%/-11.28%/+2.96%/-11.77%，大Figura仍下降，未全绿、未集成生产。详细原始结果见各轮Report.md；生产对象消费者迁移与实际画质/帧率尚未验证。

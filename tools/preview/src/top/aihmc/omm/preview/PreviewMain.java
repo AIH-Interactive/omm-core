@@ -386,6 +386,7 @@ public final class PreviewMain {
                 }
                 transform.translate(-mesh.center.x, -mesh.center.y, -mesh.center.z);
                 frame.animationMs = (System.nanoTime() - animationStart) / 1e6;
+                FloatBuffer framePalette = paletteValues;
                 if (animationState != null) {
                     long sampleStart = System.nanoTime();
                     animation.audio.listener(mesh.center.x + (float) Math.sin(yaw) * (float) Math.cos(pitch) * distance,
@@ -398,15 +399,15 @@ public final class PreviewMain {
                     frame.animationMs = (System.nanoTime() - sampleStart) / 1e6;
                     long bonesStart = System.nanoTime();
                     animationState.updateBones(nativeVertices);
-                    animationState.writePalette(paletteValues);
+                    framePalette = animationState.paletteBuffer(paletteValues);
                     frame.bonesMs = (System.nanoTime() - bonesStart) / 1e6;
                 }
                 if (cpu) {
                     long verticesStart = System.nanoTime();
                     if (nativeVertices == null)
-                        PreviewCpuVertices.transform(mesh.vertices, mesh.owners, paletteValues, cpuVertices);
+                        PreviewCpuVertices.transform(mesh.vertices, mesh.owners, framePalette, cpuVertices);
                     else
-                        nativeVertices.transform(paletteValues, cpuVertices);
+                        nativeVertices.transform(framePalette, cpuVertices);
                     frame.verticesMs = (System.nanoTime() - verticesStart) / 1e6;
                 }
                 glViewport(0, 0, width, height);
@@ -440,7 +441,7 @@ public final class PreviewMain {
                 glUniform1i(glGetUniformLocation(sceneProgram, "boneMatrices"), 3);
                 if (!cpu && animationState != null) {
                     glBindBuffer(GL_TEXTURE_BUFFER, paletteBuffer);
-                    glBufferSubData(GL_TEXTURE_BUFFER, 0, paletteValues);
+                    glBufferSubData(GL_TEXTURE_BUFFER, 0, framePalette);
                 }
                 glActiveTexture(GL_TEXTURE0);
                 glUniform1i(glGetUniformLocation(sceneProgram, "modelTexture"), 0);
