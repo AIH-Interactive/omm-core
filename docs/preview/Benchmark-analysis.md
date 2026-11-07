@@ -94,3 +94,20 @@ Release 构建 PASS（build/preview/build-bones-v1.log）。新增 PreviewBoneWi
 正确性通过，但总体性能未达标。GPU 路径 native 骨骼均仍慢于本轮 Java：目录0.109/0.054、加密0.025/0.014、Figura0.030/0.021、旧版0.047/0.025 ms。提交差距仅约0.001–0.002 ms（Figura native 更低），当前优先继续检查骨骼的 JNI 数据转换、矩阵计算及缓冲复用。Present/动画亦有轮次波动，不把总FPS差异全部归为骨骼。用户授权参考 OpenYSM / Sparkle-Morpher 后尝试最小优化。
 
 用户最新更正：后续汇报使用表格，只记录相对同条件 Java 的 FPS 差值和百分比；不再列相对旧 native 的提升。从下一轮起每轮四类各重新随机抽样并保存种子/清单；同轮 Java/native × CPU/GPU 共用对应样本以保证比较，历史结果不删除。该要求覆盖先前固定样本不重抽规则。
+
+## P3：矩阵输入转换实验与重新随机抽样（bones-v2）
+
+2026-11-07。参考 Sparkle-Morpher `common/src/main/native/openysm.cpp/dllmain.cpp` 的按列矩阵计算，以及 `ModelRendererBridge` 的 scratch/既有顺序复用；OpenYSM `NativeModelRenderer` 已核对为批量调用。本轮独立实现仅让预览 JNI 矩阵乘法直接读取 float 右矩阵，保留 double 累积、完整4×4和原加法顺序；不照搬参考库的float/FMA精度或游戏状态机，也未修改公共数学内核。剩余world临时分配与Java打包/回填未改。
+
+Release构建、60帧实窗world/palette/可见性/GPU对照PASS，日志build-bones-v2.log / test-bones-v2.log。采样工具默认使用新随机种子并记录，增加YSGP v1/v2旧版独立类别；本轮种子3193744283785998159、完整候选池与SHA256见[bones-v2/sample.json](bones-v2/sample.json)。旧版池仅old.ysm一个候选，未因重复选中换样。
+
+16个组合均完成，各3000聚焦采样帧、可见/提交1，原脚本/画面参数保留。目录首次测量工具宿主断连，原JVM22296已退出且CSV在第1975帧截断，保留failed记录并同样本重试；不计入成绩。人工视觉MANUAL/PENDING，无活动测试。
+
+| 样本 | CPU 相对Java ΔFPS | CPU 相对Java | GPU 相对Java ΔFPS | GPU 相对Java |
+|---|---:|---:|---:|---:|
+| YSM_OLD_Model | -75.25 | 🔴 -6.76% | -154.11 | 🔴 -10.77% |
+| 芙宁娜v3.14中文配音 | -53.33 | 🔴 -8.45% | +171.29 | 🟢 +15.54% |
+| wangshu.zip | -10.97 | 🔴 -1.18% | -276.15 | 🔴 -17.14% |
+| old.ysm | +88.21 | 🟢 +9.75% | -8.36 | 🔴 -0.57% |
+
+结果见[CPU](bones-v2/Benchmark-CPU.md)/[GPU](bones-v2/Benchmark-GPU.md)。总体仍未达标；新随机样本不能用于证明相对旧版本native的因果收益。四类native GPU骨骼CPU仍高于同轮Java（目录0.027/0.017、加密0.093/0.062、Figura0.034/0.016、旧版0.041/0.024 ms）；GPU Draw几乎一致，Present波动也影响总FPS。下一步先在真实模型窗口细分Java输入打包、JNI计算、Java输出回填耗时，再决定最小优化，避免仅凭总FPS继续猜测数学热点。最终多模型尚未开始。

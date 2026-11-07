@@ -4,6 +4,7 @@ import argparse
 import hashlib
 import json
 import random
+import secrets
 import zipfile
 from pathlib import Path, PurePosixPath
 
@@ -16,10 +17,12 @@ def kind(path):
             return "figura"
         return None
     with path.open("rb") as source:
-        header = source.read(7)
+        header = source.read(11)
     if header.startswith(b"\xef\xbb\xbf"):
         header = header[3:]
     if header.startswith(b"YSGP"):
+        if int.from_bytes(header[4:8], "big") in (1, 2):
+            return "ysm-legacy"
         return "ysm-encrypted"
     if zipfile.is_zipfile(path):
         with zipfile.ZipFile(path) as archive:
@@ -49,7 +52,7 @@ def fingerprint(path):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--root", type=Path, default=Path("refs/avatars"))
-    parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument("--seed", type=int, default=None)
     parser.add_argument(
         "--output",
         type=Path,
@@ -57,13 +60,15 @@ def main():
     )
     args = parser.parse_args()
     pools = {
-        name: [] for name in ("ysm-folder", "ysm-encrypted", "figura", "ysm-package")
+        name: []
+        for name in ("ysm-folder", "ysm-encrypted", "figura", "ysm-legacy", "ysm-package")
     }
     for path in sorted(args.root.iterdir(), key=lambda entry: entry.name.casefold()):
         category = kind(path)
         if category:
             pools[category].append(path.absolute())
-    rng = random.Random(args.seed)
+    seed = args.seed if args.seed is not None else secrets.randbits(63)
+    rng = random.Random(seed)
     selected = []
     for category, pool in pools.items():
         if pool:
@@ -72,7 +77,7 @@ def main():
                 {"kind": category, "path": str(path), "sha256": fingerprint(path)}
             )
     manifest = {
-        "seed": args.seed,
+        "seed": seed,
         "method": "Uniform choice per input stratum; casefold-sorted paths; no replacement after failure",
         "pools": {
             category: [str(path) for path in pool] for category, pool in pools.items()

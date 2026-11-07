@@ -9,6 +9,27 @@
 #include "abi/cpu_executor.hpp"
 #include "model/model.hpp"
 
+namespace {
+
+// Preview inputs are float matrices. Keep double accumulation and its original
+// left-to-right order, but consume the input columns without an intermediate copy.
+omm::model::Matrix4 multiply_preview(const omm::model::Matrix4 &left, const float *right) noexcept {
+    omm::model::Matrix4 result;
+    for (size_t column = 0; column < 4; ++column) {
+        const double x = right[column * 4];
+        const double y = right[column * 4 + 1];
+        const double z = right[column * 4 + 2];
+        const double w = right[column * 4 + 3];
+        for (size_t row = 0; row < 4; ++row) {
+            result[column * 4 + row] =
+                ((left[row] * x + left[4 + row] * y) + left[8 + row] * z) + left[12 + row] * w;
+        }
+    }
+    return result;
+}
+
+} // namespace
+
 // Preview-only bridge for an unlit canonical mesh. It does not alter the public
 // pose API's invertible-normal contract: zero-scale visibility matrices are
 // valid for positions here.
@@ -135,13 +156,11 @@ extern "C" JNIEXPORT void JNICALL Java_top_aihmc_omm_preview_PreviewNativeVertic
                 throw std::invalid_argument("preview local pose is not finite affine");
             }
             const int32_t parent = parents[index + offset];
-            world[index] = parent < 0 ? matrix : omm::model::multiply(world[parent - offset], matrix);
+            world[index] = parent < 0 ? matrix : multiply_preview(world[parent - offset], local + index * 16);
             visible[index] = visible[index] != 0 && (parent < 0 || visible[parent - offset] != 0);
         };
         const auto write_palette = [&](size_t index) {
-            omm::model::Matrix4 bind;
-            std::copy_n(inverse + (index + offset) * 16, 16, bind.begin());
-            auto palette = omm::model::multiply(world[index], bind);
+            auto palette = multiply_preview(world[index], inverse + (index + offset) * 16);
             if (!visible[index]) {
                 palette = {};
                 palette[15] = 1;

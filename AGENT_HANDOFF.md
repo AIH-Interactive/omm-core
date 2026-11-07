@@ -1,11 +1,21 @@
+## 当前有效交接（2026-11-07）：bones-v2 已完成，性能未达标
+
+- P2 已推送 a2d8629885ca8ad898589dcb19c533421afeaa37；用户已明确授权后续所有提交默认授权、不再询问；本轮八文件提交推送继续按阶段规则执行，保留其他M3修改。本轮未提交改动为 preview_vertices_jni.cpp 的 multiply_preview（直接消费float右矩阵，保留double累积及原运算顺序）、Sample-PreviewModels.py（随机新种子及旧版独立分层）、本轮报告。其他M3修改保留。
+- 构建PASS：build/preview/build-bones-v2.log；60帧真实窗口world/palette/可见性/GPU对照PASS：test-bones-v2.log。JAR不变，DLL已重建，artifacts.json保存哈希。
+- 本轮seed3193744283785998159，四类抽中YSM_OLD_Model、芙宁娜v3.14中文配音.ysm、wangshu.zip、old.ysm；manifest和配置在build/preview/benchmark/bones-v2，manifest另存docs/preview/bones-v2/sample.json。同轮路径共用样本，不因失败换样。
+- 目录四组完成：CPU -6.76%、GPU -10.77%；加密四组完成：CPU -8.45%、GPU +15.54%（相对同轮Java）。都是3000聚焦采样帧，可见/提交1，逐项报告已保存。
+- 原目录首次测量因工具宿主断连，JVM22296已消失，CSV在1975帧截断；已标failed保留，不计成绩。重试目录四组session96830 exit0；加密session3289 exit0。
+- Figura session68464、旧版 session94575 均exit0，本轮16组合全部完整。Figura CPU -1.18% / GPU -17.14%，旧版CPU +9.75% / GPU -0.57%；各3000聚焦采样帧、可见/提交1。当前无活动测试。
+- 未总体全绿，不开始最终多模型或主M3–M6。下一步完成本轮提交推送检查点；之后新随机轮次先细分Java打包/JNI计算/Java回填耗时，再做有依据的最小优化。只实窗，无Minecraft。
+- 用户要求表格只比较Java；周剩<=2%优先banked reset，最后可靠余额58%、可用reset2次，尚未使用。
 ## 当前有效交接（2026-11-07）：P2 实验完成，性能未达标
 
 - 最新用户规则优先于下方历史：下一轮起每轮四类各重新随机抽样，保存种子/清单，同轮 Java/native CPU/GPU 共用对应样本；汇报用表格，只列相对 Java 的 FPS 差值和百分比。允许参考 refs/OpenYSM、refs/Sparkle-Morpher 做最小优化。
-- main；旧版基线检查点 2c9a28cf4c9b0e14860b8d03c7b2910f40468596 已推送确认。P2 源码、测试及报告尚未提交；其他 M3 修改必须保留，主 M3–M6 暂停。
+- main；旧版基线检查点 2c9a28cf4c9b0e14860b8d03c7b2910f40468596 已推送确认。P2 检查点 a2d8629885ca8ad898589dcb19c533421afeaa37 已提交推送并核对远端 main；其他 M3 修改必须保留，主 M3–M6 暂停。
 - P2：tools/preview/native/preview_vertices_jni.cpp 单线程跳过深度分桶和分层调度，保持 double 中间矩阵及校验；tools/preview/tests/PreviewBoneWindowTest.java 新增真实窗口对照。Release 构建、修改前后各60帧world/palette/可见性/实际GPU对照 PASS。
 - bones-v1 四类16组合完整，各3000聚焦帧、可见/提交1；相对Java：目录CPU +47.24% / GPU -9.19%，加密CPU -13.40% / GPU -7.55%，FiguraCPU -13.76% / GPU +8.58%，旧版CPU -6.87% / GPU -11.41%。未总体全绿。首次日志占用失败保留并排除；当前无活动测试。
 - 日志 build/preview/build-bones-v1.log、test-bones-before.log、test-bones-after.log；正式原始数据 build/preview/benchmark/bones-v1，报告 docs/preview/bones-v1；构建产物与路径见下方。没有改Java生产源码，JAR未重建，DLL已重建。
-- 下一最小任务：完成P2检查点提交推送；然后参考两项目，优先定位 JNI 骨骼矩阵转换/计算/缓冲复用，因为四类GPU骨骼耗时仍高于Java。不要恢复其他功能或提前最终多模型。人工视觉 MANUAL/PENDING。
+- 下一最小任务：参考两项目，优先定位 JNI 骨骼矩阵转换/计算/缓冲复用，因为四类GPU骨骼耗时仍高于Java。不要恢复其他功能或提前最终多模型。人工视觉 MANUAL/PENDING。
 - 周额度最近剩59%，banked reset 可用2次。用户授权周剩<=2%时优先自动使用可用reset，成功后查询继续；不可用/无法执行则按原规则安全交接。目前未使用reset。
 ## 当前有效交接（2026-11-07）：专项优化已接续
 
