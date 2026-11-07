@@ -132,3 +132,20 @@ bones-v2检查点20c383afc22075ce677115ed57fa8f59e643e0ed已推送。用户已�
 五轮原始数据分析保存build/preview/benchmark/bones-v3/round-analysis.json。目录Java GPU骨骼round0=0.0356、round4=0.0133 ms；native=0.0422/0.0313。加密Java=0.0547/0.0219、native=0.0845/0.0499。早期采样仍有热身变化，但后轮native差距未消失，不能仅归因JIT；所有帧保留，不追删慢帧。小符玄骨骼整体Java0.621/native0.775 ms，需继续检查脚本相关调用与组合次数。
 
 源码已确认YSM Java路径直接在父world上应用TRS，native路径先在Java生成local，再JNI做通用world组合；native多出一次矩阵组合和桥接。下一步针对实际调用频次与该结构差异定位，不再只从world分配推断总FPS收益。参考项目可以用于最小实现，但不移植游戏状态机、不改画质、不提前多模型。
+
+## 参考架构与独立候选验证（2026-11-07）
+
+用户更新顺序：先在独立测试中验证候选组合，随后性能筛选，确认后才集成omm-core。下面是本地源码的具体机制对比，不是四项目整体性能排名。
+
+| 项目及源码 | 已确认机制 | 当前候选用途 |
+|---|---|---|
+| OMP_26.3 `render/acceleration/GpuPoseArena.java` | 按帧暂存对齐的姿态块，只上传尚未flush部分；GPU fence完成后回收缓冲 | 借鉴输出所有权与生命周期；暂不引入多模型arena |
+| OpenYSM `rip/ysm/gpu/GpuRenderPath.java` | native骨骼计算直接填充perFrameBoneBuffer，然后上传SSBO；mesh缓存 | 评估直接生成上传布局，减少Java回填后再次打包 |
+| SPM `core/gpu/GpuRenderPath.java` | native写输出缓冲；Java路径复用骨骼scratch并使用预烘焙顺序 | 作为同语义候选的对照；不移植静默fallback |
+| YSM-native `modules/gfx/src/renderer/model_state_impl.inc` | 直接消费BoneAttribute，在native PoseStack应用TRS；复用pose存储及适用的调度结果 | 评估消除Java local矩阵构建与native通用组合之间的额外工作 |
+
+当前预览器`PreviewMultiWindow`先更新全部实例再绘制，多个实例共享模型renderer/native桥。直接把桥的最后输出给所有实例使用会串姿态，必须保留每实例结果。Figura的`partToWorldMatrix`读取缓存savedPartToWorld，不会自行递归重新组合；世界矩阵查询语义仍需保留。
+
+首个独立候选测试`tools/preview/tests/PreviewPoseCandidateWindowTest.java`使用实际单线程native compose，测试输出发布边界：两实例先更新、后消费；手算矩阵常量作为预期。共享输出原型在真实窗口RED：实例A位移应为-0.25，实际被B覆盖为0.5（`build/preview/test-pose-candidate-red.log`）。改为每实例输出后GREEN，30组双实例更新覆盖隐藏/恢复、反射/非均匀缩放、世界矩阵读取及真实GPU shader与CPU顶点一致性（`test-pose-candidate-green.log`）。这是小型合成正确性测试，不是提前运行最终多模型性能矩阵；未加载模型资产。
+
+生产运行路径、JAR和DLL均未改变。该候选仍通过Java矩阵打包，因此尚未证明消除往返，也没有FPS收益结论。下一步在同一输出边界增加独立native直写/TRS候选，继续实窗正确性与性能筛选；四类正式模型每轮重新随机抽样，同轮Java/native路径复用样本，最终报告仅相对Java。当前最优组合与总目标均未完成。

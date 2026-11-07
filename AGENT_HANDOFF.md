@@ -1,11 +1,21 @@
-## 当前有效交接（2026-11-07）：bones-v3 world复用实验完成，未全绿
+## 当前有效交接（2026-11-07）：独立候选测试先行
+
+- 最新用户更正覆盖下面测试方式：当前候选单元测试仅测对应操作耗时，允许真实模型，暂不需要实窗。后续候选筛选采用无窗口操作计时，分别记录骨骼/JNI/回填/打包；不能把操作耗时当作最终FPS。下述实窗RED/GREEN保留为已完成历史，不再据旧规则启动候选实窗。
+
+- 用户最新顺序：对比OMP/OpenYSM/SPM/YSM-native，先在独立单元测试确认候选，再实窗性能筛选，通过后集成omm-core。生产路径未改，主M3–M6仍暂停，整体未全绿。
+- 新增tools/preview/tests/PreviewPoseCandidateWindowTest.java：实际native单线程compose、两实例先更新后消费、手算预期。共享输出原型真实窗口RED（A位移-0.25被覆盖为0.5），每实例输出GREEN；30组覆盖隐藏恢复、反射/非均匀缩放、世界矩阵值、实际GPU/CPU一致性。日志build/preview/test-pose-candidate-red.log和test-pose-candidate-green.log。不含Lua API端到端或真实资产性能结论。
+- 四参考机制与源码位置记录docs/preview/Benchmark-analysis.md末尾。已排除共享桥最后输出直接供全部实例绘制的方案；目前候选仍走Java矩阵打包，尚非最终直写优化。
+- 下一步：在独立测试输出边界加入native直写/TRS候选，验证offset、实例隔离及脚本所需world语义，然后实窗性能筛选；不要直接改生产路径或宣称已找到最优组合。正式新轮四类重新随机抽样，同轮路径共用样本。
+- 当前main基于277f05f；本轮仅测试/分析/交接记录待检查点提交推送，其他M3修改保留。生产JAR/DLL不变，无活动测试；人工视觉MANUAL/PENDING。可靠额度周剩56%，banked reset可用2次，未消耗。
+
+## 历史交接（2026-11-07）：bones-v3 world复用实验完成，未全绿
 
 - 用户明确后续所有提交默认授权、不再询问；按阶段规则提交推送当前专项，保留其他M3修改。bones-v2检查点20c383afc22075ce677115ed57fa8f59e643e0ed已推送并核对远端main。
 - 新轮随机manifest/config位于build/preview/benchmark/bones-v3，manifest另存docs/preview/bones-v3。选中ZZZ_Ellen_1、银狼Lv.999v1.2.ysm、小符玄、old.ysm；同轮各路径共用样本。目录无idle，配置改用其声明walk；错误日志保留，不换样。
 - 临时实窗诊断：目录134骨骼，Java pack0.001117 / JNI0.013829 / read0.002218 ms。进一步JNI buffers0.002554 / topology+world准备0.004358 / matrices0.008429 ms（独立插桩运行，不当正式FPS）。日志profile-bones-directory-walk.log、profile-bones-native-walk.log。
 - 已移除所有临时Java/native插桩。唯一生产改动preview_vertices_jni.cpp：复用预览私有instance.pose的double world存储，仍持锁、每实例隔离、保留拓扑校验。build-bones-v3.log / build-bones-v3-java.log构建PASS，test-bones-v3.log的60帧实窗world/palette/可见性/shader对照PASS。JAR/DLL已重建，artifacts.json存哈希。
 - 本轮目录5395、加密59833、Figura44847、旧版75406均exit0；16组合完整，各3000聚焦帧、可见/提交1。CPU/GPU相对Java：目录-0.03%/-12.67%，加密+5.54%/-13.32%，Figura-4.00%/-5.19%，旧版-5.12%/-13.34%。当前无活动测试，未全绿，主M3–M6与最终多模型未开始。
-- 当前改动准备检查点提交推送。之后优先核对骨骼调用频次及Java父world直接TRS与native local+compose结构差异；五轮热身分析已保存，不能只把差距归因JIT。最后额度周剩57%，reset2次；<=2%优先使用授权reset。人工视觉MANUAL/PENDING。
+- 本轮检查点277f05f621dc17ffc102c5dd93b994bc6fa9ec22已提交推送并核对远端main；本条提交后状态更新尚未单独提交。之后优先核对骨骼调用频次及Java父world直接TRS与native local+compose结构差异；五轮热身分析已保存，不能只把差距归因JIT。最后额度周剩56%，reset2次；<=2%优先使用授权reset。人工视觉MANUAL/PENDING。
 ## 当前有效交接（2026-11-07）：bones-v2 已完成，性能未达标
 
 - P2 已推送 a2d8629885ca8ad898589dcb19c533421afeaa37；用户已明确授权后续所有提交默认授权、不再询问；本轮八文件提交推送继续按阶段规则执行，保留其他M3修改。本轮未提交改动为 preview_vertices_jni.cpp 的 multiply_preview（直接消费float右矩阵，保留double累积及原运算顺序）、Sample-PreviewModels.py（随机新种子及旧版独立分层）、本轮报告。其他M3修改保留。
