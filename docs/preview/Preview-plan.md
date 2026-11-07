@@ -514,4 +514,5 @@ P2单线程骨骼顺序执行已构建并通过60帧实窗数值/shader对照；
 真实窗口细分确认JNI内部占骨骼桥接主要耗时；最小复用预览私有instance的double world存储，移除全部临时插桩后构建及60帧实窗对照PASS。新随机四类16组合完整，仍未全绿，结果与失败见Benchmark-analysis.md/bones-v3。下一步分析骨骼实际调用频次及Java直接父world TRS与native local+compose的结构差异；最终多模型和主M3–M6尚未开始。
 
 ### 独立候选验证先行（2026-11-07）
+最新用户更正：候选阶段仅操作耗时测试，可用真实模型，暂不需要实窗。operations-v1四类新随机样本无窗口计时已完成，详见operations-v1/Report.md；native组合周期仍慢于Java，直接打包候选收益不足抵消差距，尚未选择或集成最佳组合。下一步独立native姿态参数/结果发布候选。
 用户要求先单元测试确认候选组合，再集成omm-core。首个输出隔离候选已完成实窗RED/GREEN（共享缓冲覆盖错误→每实例输出正确），详见Benchmark-analysis.md和PreviewPoseCandidateWindowTest.java。该步骤无生产变更、无性能通过结论；native直写/TRS候选及四类随机实窗性能筛选待完成，整体专项与最终多模型仍未完成。
