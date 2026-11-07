@@ -1,3 +1,10 @@
+## 最新检查点（2026-11-07）：Figura 平移候选未采用
+
+- 当前 main，已推送 6a2f8cb；本轮没有保留生产变更。JFR 实窗 Java/native 两例 exit 0；native Figura update identity 行 166 个顶层样本。日志含 PDH counter 不可用警告，保留，不推断整机负载。
+- 独立最小候选 identity+translate 改 translation，构建与真实资产 State/CPU-GPU 实窗数值对照通过；四组正式 Figura 实窗完整（3000 聚焦帧/组、可见/提交 1）。相对 Java CPU -5.94%、GPU -14.86%，不达标。
+- 本地 JOML 字节码证明 translation 仍调用 MemUtil.identity；候选未解决主要成本。已撤回唯一生产改动并重建原版本 JAR 成功，源码与 6a2f8cb 一致。候选补丁、候选产物 SHA256、清单、完整报告在 docs/preview/bones-v5；原 JFR 在 build/preview/benchmark/profile-v5，原帧日志在 build/preview/benchmark/bones-v5/render。
+- 下一步进一步拆分 Figura 局部姿态计算与 JNI 打包/回填成本；不能再重复单换初始化 API。Present 根因尚未证实，所有下降保留；最终多模型未开始，M3–M6 不恢复。后续仅真实可见窗口测试，单线程固定原样本。
+- 当前无活动构建/测试，其他 M3 工作区修改保留。本轮文档检查点准备提交推送，以 HEAD 与远端核对为准。人工视觉 MANUAL/PENDING。
 ## 最新检查点（2026-11-07）：bones-v4 实窗矩阵完成，仍未达标
 
 - 基于已推送 9f21f9f，本轮无生产代码改动；新增 PreviewStatePublicationWindowTest 实窗集成回归及 docs/preview/bones-v4 报告。

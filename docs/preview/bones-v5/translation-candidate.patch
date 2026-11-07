@@ -1,0 +1,33 @@
+diff --git a/tools/preview/src/top/aihmc/omm/preview/PreviewFiguraParts.java b/tools/preview/src/top/aihmc/omm/preview/PreviewFiguraParts.java
+index 89179de..7091f0c 100644
+--- a/tools/preview/src/top/aihmc/omm/preview/PreviewFiguraParts.java
++++ b/tools/preview/src/top/aihmc/omm/preview/PreviewFiguraParts.java
+@@ -162,15 +162,21 @@ public final class PreviewFiguraParts {
+                 Node node = nodes.get(index);
+                 Part part = parts[index];
+                 Matrix4f matrix = world[index];
+-                if (nativeVertices != null || node.parent() < 0) {
+-                    matrix.identity();
++                float positionX = (part.position.x + part.animPosition.x) / 16;
++                float positionY = (part.position.y + part.animPosition.y) / 16;
++                float positionZ = (part.position.z + part.animPosition.z) / 16;
++                if (nativeVertices != null) {
++                    // Native composes parents later; directly initialize this local translation.
++                    matrix.translation(positionX, positionY, positionZ);
+                 } else {
+-                    matrix.set(world[node.parent()]);
++                    if (node.parent() < 0) {
++                        matrix.identity();
++                    } else {
++                        matrix.set(world[node.parent()]);
++                    }
++                    matrix.translate(positionX, positionY, positionZ);
+                 }
+-                matrix
+-                    .translate((part.position.x + part.animPosition.x) / 16,
+-                        (part.position.y + part.animPosition.y) / 16, (part.position.z + part.animPosition.z) / 16)
+-                    .translate(part.pivot);
++                matrix.translate(part.pivot);
+                 Vector3f rotation = new Vector3f(part.rotation).add(part.animRotation).mul((float) (Math.PI / 180));
+                 if (node.mesh()) {
+                     matrix.rotateX(rotation.x).rotateY(rotation.y).rotateZ(rotation.z);
