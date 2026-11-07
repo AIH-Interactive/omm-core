@@ -4,6 +4,12 @@
 
 补齐预览器缺口前，以[当前最小缺口清单](Minimum-gaps.md)固定范围：仅实施已确认项；每类模型只抽样、加载一次，停止逐项重复加载。该清单不替代原阶段交付要求。
 
+## 当前主要持续性目标：专项性能优化
+
+用户指定专项优化优先，其他开发阶段暂缓。主线为固定真实样本的单模型 CPU/GPU 与解析专项：实窗基线、一次一个热点、同配置实窗复测、逐项报告 FPS/百分比、阶段提交推送及额度检查。覆盖原三类样本，并增加旧版 YSM 独立类别；最终多模型测试等待全部路径优化完成，不以“全绿”目标更改画面或隐藏下降成绩。
+
+旧版容器按文件头识别，不根据名称或修改时间猜版本。新增抽样记录见 [旧版样本清单](legacy-sample.json)，保留原三类选样不变；实际内部binary版本和动画可用性由后续实窗加载记录确认。
+
 ## 最新测试顺序（用户要求，2026-11-07）
 
 优化期间只用单模型：固定原抽样YSM目录、加密YSM、Figura，分别覆盖Java/native单线程的CPU/GPU路径及各自必要解析测量。先完成所有路径优化与验证，再统一进行最终多模型same-model/mixed五档测试。已有多模型成绩保留为旧基线，优化期间不新增多模型测量，不为每个小改动重复多模型矩阵。
@@ -488,3 +494,7 @@ Measure-Preview.ps1默认Threads=1（Java1/native1×CPU/GPU），可显式-Threa
 | refs/Sparkle-Morpher | 2e9dddadb09f74ae1456714fcfa118bc1d8c965e | 1,939 files / 42,046 nodes / 110,164 edges；status与projectPath查询成功 |
 
 两目录被主仓库忽略，不提交上游源码/索引；来源分别为https://github.com/OpenYSM/OpenYSM.git、https://github.com/AIH-Interactive/Sparkle-Morpher.git。拉取和建图在benchmark暂停期间完成，没有与正式计时并行。日志build/preview/clone-*.log与codegraph-*.log。
+
+### 2026-11-07 旧版基线检查点
+
+old.ysm 四组合已完成，各 3000 聚焦采样帧、可见/提交 1。CPU native 相对同轮 Java -2.19%，GPU -8.50%，完整成绩保存在 unlit-v1 报告；不重复旧基线。下一步 P2 仅单线程骨骼准备优化，主 M3–M6 暂停。

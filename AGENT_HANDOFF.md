@@ -1,4 +1,19 @@
-# 当前交接：独立预览器优先，原 M3 流程暂停
+## 当前有效交接（2026-11-07）：专项优化已接续
+
+- 当前主要持续性目标为固定四类样本单线程专项优化；原主 M3–M6 保持暂停。下方历史状态如有冲突以本节为准。
+- main / ac8b1f50844b94d75a6f035ee0c7cf188c353d73，P1 已推送。旧版 old.ysm 四组合 metadata 均 complete / exitCode 0，结果已保存，无需重测旧基线。各 3000 聚焦采样帧、可见/提交 1；CPU native 881.64 FPS，相对 Java -19.70 / -2.19%；GPU native 1377.27 FPS，相对 Java -127.89 / -8.50%。
+- P2 尚未修改源码。已核对 compose 每帧建立 depth/seen/levels/world 并按层调度；下一步仅优化单线程骨骼准备，保持 Java/native world、palette、可见性语义及真实窗口验证。其他未提交 M3 修改全部保留。
+- 固定样本与启动方式见 tools/preview/README.md、docs/preview/Preview-plan.md、docs/preview/Benchmark-analysis.md；配置位于 build/preview/benchmark/random，旧版为 legacy-single.json。JAR 为 build/preview/preview.jar，DLL 为 build/windows-x64-Release/bin/Release/omm_core.dll。
+- 仅真实可见 Windows 窗口测试；不运行无窗口测试/微基准，不启动 Minecraft。优化期间仅四类单模型 Java/native1 × CPU/GPU，所有路径完成后再最终多模型矩阵。逐组合更新报告，保留下降；人工视觉 MANUAL/PENDING。
+- 可靠额度接口：周已用 41%，剩余 59%，未触发 Luna 交接。当前尚未总体全绿，P2 与最终矩阵未完成。
+> 新会话发送状态：用户要求重试后已成功创建并发送到“单线程专项优化：实窗总体全绿”，threadId=01a1b5c4-0a4d-7830-939e-601f4ebd740e，hostId=local。原会话总目标保持paused。
+
+## 当前主要持续性目标：专项优化，覆盖旧版YSM
+
+- 用户最新明确专项优化作为当前主要持续性目标，其他开发阶段暂缓。保留总目标与阶段提交推送/额度规则，但下一任务只围绕已定位CPU/GPU/解析热点及实窗复测，不恢复其他功能开发。
+- ac8b1f50844b94d75a6f035ee0c7cf188c353d73已推送origin/main，P1源优化/12例实窗/仅实窗AGENTS规则均已提交；推送后remaining60%。当前没有活动会话。
+- 原目录/当前加密/Figura三样本不重抽。已只读扫描.ysm文件头，新增legacy stratum按seed42固定选样，manifest在docs/preview/legacy-sample.json及build/preview/benchmark/random/legacy-sample.json；old.ysm容器YSGP v2已确认，内部binary版本尚未解析确认，不混为当前v3。
+- 下一步先用当前P1程序对新增旧版样本作单模型四路径实窗基线，随后P2骨骼准备优化覆盖四类单模型。所有路径后再最终多模型；不再运行无窗口测试或微基准。最小运行配置legacy-single.json已生成，尚未启动模型。
 
 ## P1本轮单模型实窗验证完成，准备提交
 

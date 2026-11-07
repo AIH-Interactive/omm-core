@@ -1,0 +1,15 @@
+{
+  "seed": 42,
+  "method": "Supplemental fixed legacy stratum; existing three selected inputs remain unchanged",
+  "pool": [
+    {
+      "path": "D:\\UserData\\Desktop\\Project\\omm-core\\refs\\avatars\\old.ysm",
+      "containerVersion": 2
+    }
+  ],
+  "selected": {
+    "path": "D:\\UserData\\Desktop\\Project\\omm-core\\refs\\avatars\\old.ysm",
+    "containerVersion": 2,
+    "sha256": "94936ac3b8bee6b32f6d86436bc11e2bec40a5209a0e044c2247597afacc07f4"
+  }
+}
