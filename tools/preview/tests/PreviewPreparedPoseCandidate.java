@@ -34,14 +34,7 @@ final class PreviewPreparedPoseCandidate implements AutoCloseable {
     }
 
     void compose(Matrix4f[] localWorld, Matrix4f[] outputPalette, boolean[] visible, boolean simd) {
-        if (handle == 0) {
-            throw new IllegalStateException("Candidate is closed");
-        }
-        for (int bone = 0; bone < localWorld.length; bone++) {
-            localWorld[bone].get(bone * 16, local);
-            frame.put(visibilityOffset + bone, (byte) (visible[bone] ? 1 : 0));
-        }
-        compute(handle, simd);
+        publish(localWorld, visible, simd);
         for (int bone = 0; bone < localWorld.length; bone++) {
             localWorld[bone].set(bone * 16, world);
             outputPalette[bone].set(bone * 16, palette);
@@ -49,8 +42,27 @@ final class PreviewPreparedPoseCandidate implements AutoCloseable {
         }
     }
 
+    void publish(Matrix4f[] input, boolean[] visible, boolean simd) {
+        publish(input, visible, simd ? 1 : 0);
+    }
+
+    void publish(Matrix4f[] input, boolean[] visible, int kernel) {
+        if (handle == 0) {
+            throw new IllegalStateException("Candidate is closed");
+        }
+        for (int bone = 0; bone < input.length; bone++) {
+            input[bone].get(bone * 16, local);
+            frame.put(visibilityOffset + bone, (byte) (visible[bone] ? 1 : 0));
+        }
+        compute(handle, kernel);
+    }
+
+    float worldX(int bone) {
+        return world.get(bone * 16 + 12);
+    }
+
     private static native long create(int[] parents, int[] order, float[] inverse, ByteBuffer frame);
-    private static native void compute(long handle, boolean simd);
+    private static native void compute(long handle, int kernel);
     private static native void destroy(long handle);
 
     @Override

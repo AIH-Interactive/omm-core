@@ -1,5 +1,10 @@
 ## 当前有效交接（2026-11-07）：独立候选测试先行
 
+- operations-v4/v5/v6已全部exit0，无活动进程。新增同输出契约的Java/native发布计时：每实例直接world/palette/visibility缓冲，不回填Matrix4f。独立候选继续组合预备拓扑/连续存储/SSE2/仿射乘法/向量化finite校验，生产路径未改。表中只比较java_publish，不能与旧compose_cycle或FPS混比。
+- v6随机02_new_year（138）、DS鲸鱼娘.ysm（208）、小符玄（3500）、old.ysm（206）。checked_simd发布相对Java耗时-12.32%/-11.28%/+2.96%/-11.77%；大Figura仍下降，尚非全绿。每操作10000预热+5×2000，完整CSV/manifest/报告在docs/preview/operations-v4/v5/v6，v6含DLL/JAR哈希。无窗口，仅计时，未作正确性通过主张。
+- v4 Figura苍梧吟月Pro.zip外部fs2000.png缺失诊断后完成解析和计时，原日志保留。生产矩阵对象消费者迁移成本仍需验证，不能把发布契约收益当成生产收益。下一步聚焦大Figura发布耗时/数据体积及姿态参数候选，保留double精度或先独立评估等同Java精度方案；未集成最佳组合。
+- 前检查点d72779d09dc339857e205597c0e2da10c74a351d已推送核对。本轮独立测试/报告准备检查点提交，其他M3修改保留。
+
 - 最新operations-v2/v3均完成exit0，独立测试DLL已构建（tools/preview/tests/pose-candidate，复现见README）。Java入口PreviewPreparedPoseCandidate及扩展计时器仅在test-classes，不改生产JAR/DLL。候选预校验拓扑/缓存地址/连续world存储/SSE2 double；保留local有限仿射校验、world/palette回填，当前仅完整骨架、单调用线程。
 - v3四类新随机15_kluonoa、少女-哥伦比娅.ysm、aylDWT 4.2.zip、old.ysm；SSE2组合周期相对Java耗时+67.89%/+65.87%/+69.66%/+65.19%，仍未达标。v2/v3清单、原始CSV与报告在docs/preview/operations-v2及v3。下一步独立参数直算/减少往返候选，不能宣称最优或直接集成。没有运行实窗。
 - 用户要求继续优先单线程并分析Java核心使用：已核对主循环/骨骼/顶点/多实例路径均串行，无工作线程派发；JVM/驱动后台线程与GPU另算，操作系统可迁移线程而非固定核心。分析见Benchmark-analysis.md。未做本轮进程线程采样。

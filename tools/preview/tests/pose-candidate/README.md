@@ -4,6 +4,8 @@
 
 标量和SSE2内核均使用double中间值，保持加法顺序；SSE2是单线程向量化，不是多核调度。没有开启fast-math。当前计时使用真实模型层级和受控局部姿态，不运行模型动画或脚本，不证明完整渲染正确性或FPS收益。
 
+追加发布候选：输出直接保留在每实例world/palette/visibility缓冲，不回填Java矩阵；与同输出契约的java_publish比较。仿射核校验inverse bind末行后省去零乘法；checked_simd核使用SSE比较float绝对值与最大有限值，保留NaN/Inf及仿射末行检查。该输出契约尚未适配生产脚本和剔除消费者，不能把它的操作收益直接当作生产收益。
+
 从仓库根目录以前台PowerShell执行，每条构建/测试命令后立即检查退出码：
 
 ```powershell

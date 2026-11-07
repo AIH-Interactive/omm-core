@@ -2,6 +2,7 @@ package top.aihmc.omm.preview;
 
 import com.google.gson.JsonParser;
 import java.io.PrintWriter;
+import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -24,6 +25,8 @@ public final class PreviewPoseOperationBenchmark {
         final Matrix4f[] palette;
         final boolean[] visible;
         final FloatBuffer output;
+        final FloatBuffer publishedWorld;
+        final ByteBuffer publishedVisibility;
         final PreviewNativeVertices bridge;
         final PreviewPreparedPoseCandidate prepared;
 
@@ -35,6 +38,8 @@ public final class PreviewPoseOperationBenchmark {
             palette = new Matrix4f[count];
             visible = new boolean[count];
             output = MemoryUtil.memAllocFloat(count * 16);
+            publishedWorld = MemoryUtil.memAllocFloat(count * 16);
+            publishedVisibility = MemoryUtil.memAlloc(count);
             bridge = new PreviewNativeVertices(mesh, config);
             prepared = new PreviewPreparedPoseCandidate(skeleton);
             for (int bone = 0; bone < count; bone++) {
@@ -88,6 +93,33 @@ public final class PreviewPoseOperationBenchmark {
             consumed = output.get(output.capacity() - 4);
         }
 
+        void publish(int implementation) {
+            if (implementation > 0) {
+                prepared.publish(local, skeleton.restVisible, implementation);
+                consumed = prepared.worldX(local.length - 1);
+                return;
+            }
+            // Same result contract as native: retained world, palette and visibility buffers.
+            // Do not add the older cycle's redundant input-reset pass to this Java baseline.
+            for (int bone : skeleton.order) {
+                int parent = skeleton.parents[bone];
+                if (parent < 0) {
+                    world[bone].set(local[bone]);
+                } else {
+                    world[bone].set(world[parent]).mul(local[bone]);
+                }
+                visible[bone] = skeleton.restVisible[bone] && (parent < 0 || visible[parent]);
+                palette[bone].set(world[bone]).mul(skeleton.inverseBindWorld[bone]);
+                if (!visible[bone]) {
+                    palette[bone].scaling(0);
+                }
+                world[bone].get(bone * 16, publishedWorld);
+                palette[bone].get(bone * 16, output);
+                publishedVisibility.put(bone, (byte) (visible[bone] ? 1 : 0));
+            }
+            consumed = publishedWorld.get((local.length - 1) * 16 + 12);
+        }
+
         void run(int operation) {
             switch (operation) {
                 case 0 -> compose(0);
@@ -96,6 +128,10 @@ public final class PreviewPoseOperationBenchmark {
                 case 3 -> pack(true);
                 case 4 -> compose(2);
                 case 5 -> compose(3);
+                case 6 -> publish(0);
+                case 7 -> publish(1);
+                case 8 -> publish(2);
+                case 9 -> publish(3);
                 default -> throw new IllegalArgumentException("Unknown operation");
             }
         }
@@ -105,6 +141,8 @@ public final class PreviewPoseOperationBenchmark {
             bridge.close();
             prepared.close();
             MemoryUtil.memFree(output);
+            MemoryUtil.memFree(publishedWorld);
+            MemoryUtil.memFree(publishedVisibility);
         }
     }
 
@@ -113,7 +151,9 @@ public final class PreviewPoseOperationBenchmark {
         var sample = JsonParser.parseString(Files.readString(manifest)).getAsJsonObject();
         System.load(Path.of(args[3]).toAbsolutePath().toString());
         String[] operations = {"java_compose_cycle", "native_compose_cycle", "java_nio_pack",
-            "candidate_direct_pack", "candidate_prepared_cycle", "candidate_simd_cycle"};
+            "candidate_direct_pack", "candidate_prepared_cycle", "candidate_simd_cycle",
+            "java_publish", "candidate_direct_publish", "candidate_affine_publish",
+            "candidate_checked_simd_publish"};
         try (var report = new PrintWriter(Files.newBufferedWriter(Path.of(args[2])))) {
             report.println("kind,bones,operation,round,iterations,ns_per_operation");
             report.flush();

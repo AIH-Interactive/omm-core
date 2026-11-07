@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <array>
 #include <cmath>
+#include <limits>
 #include <cstdint>
 #include <memory>
 #include <stdexcept>
@@ -57,6 +58,37 @@ Matrix multiply_simd(const Matrix &left, const float *right) {
     return result;
 }
 
+Matrix multiply_affine(const Matrix &left, const float *right) {
+    Matrix result;
+    for (size_t row = 0; row < 4; row += 2) {
+        const __m128d a = _mm_loadu_pd(left.data() + row);
+        const __m128d b = _mm_loadu_pd(left.data() + 4 + row);
+        const __m128d c = _mm_loadu_pd(left.data() + 8 + row);
+        for (size_t column = 0; column < 4; ++column) {
+            __m128d value = _mm_mul_pd(a, _mm_set1_pd(right[column * 4]));
+            value = _mm_add_pd(value, _mm_mul_pd(b, _mm_set1_pd(right[column * 4 + 1])));
+            value = _mm_add_pd(value, _mm_mul_pd(c, _mm_set1_pd(right[column * 4 + 2])));
+            if (column == 3) {
+                value = _mm_add_pd(value, _mm_loadu_pd(left.data() + 12 + row));
+            }
+            _mm_storeu_pd(result.data() + column * 4 + row, value);
+        }
+    }
+    return result;
+}
+
+bool finite_affine_simd(const float *matrix) {
+    const __m128 absolute_mask = _mm_castsi128_ps(_mm_set1_epi32(0x7fffffff));
+    const __m128 maximum = _mm_set1_ps(std::numeric_limits<float>::max());
+    for (size_t offset = 0; offset < 16; offset += 4) {
+        const __m128 values = _mm_and_ps(_mm_loadu_ps(matrix + offset), absolute_mask);
+        if (_mm_movemask_ps(_mm_cmple_ps(values, maximum)) != 15) {
+            return false;
+        }
+    }
+    return matrix[3] == 0 && matrix[7] == 0 && matrix[11] == 0 && matrix[15] == 1;
+}
+
 void fail(JNIEnv *env, const std::exception &failure) {
     if (!env->ExceptionCheck()) {
         jclass type = env->FindClass("java/lang/IllegalStateException");
@@ -87,6 +119,13 @@ extern "C" JNIEXPORT jlong JNICALL Java_top_aihmc_omm_preview_PreviewPreparedPos
         if (env->ExceptionCheck()) {
             return 0;
         }
+        for (size_t bone = 0; bone < count; ++bone) {
+            const float *matrix = context->inverse.data() + bone * 16;
+            if (!std::all_of(matrix, matrix + 16, [](float value) { return std::isfinite(value); }) ||
+                matrix[3] != 0 || matrix[7] != 0 || matrix[11] != 0 || matrix[15] != 1) {
+                throw std::invalid_argument("Candidate inverse bind must be finite affine");
+            }
+        }
         std::vector<bool> seen(count, false);
         for (jint bone : context->order) {
             if (bone < 0 || static_cast<size_t>(bone) >= count || seen[bone]) {
@@ -114,13 +153,15 @@ extern "C" JNIEXPORT jlong JNICALL Java_top_aihmc_omm_preview_PreviewPreparedPos
 }
 
 extern "C" JNIEXPORT void JNICALL Java_top_aihmc_omm_preview_PreviewPreparedPoseCandidate_compute(
-    JNIEnv *env, jclass, jlong handle, jboolean simd) {
+    JNIEnv *env, jclass, jlong handle, jint kernel) {
     try {
         auto &context = *reinterpret_cast<Context *>(handle);
         for (jint bone : context.order) {
             const float *local = context.local + bone * 16;
-            if (!std::all_of(local, local + 16, [](float value) { return std::isfinite(value); }) ||
-                local[3] != 0 || local[7] != 0 || local[11] != 0 || local[15] != 1) {
+            const bool valid = kernel == 3 ? finite_affine_simd(local)
+                : std::all_of(local, local + 16, [](float value) { return std::isfinite(value); }) &&
+                    local[3] == 0 && local[7] == 0 && local[11] == 0 && local[15] == 1;
+            if (!valid) {
                 throw std::invalid_argument("Candidate local pose must be finite affine");
             }
             const jint parent = context.parents[bone];
@@ -128,11 +169,14 @@ extern "C" JNIEXPORT void JNICALL Java_top_aihmc_omm_preview_PreviewPreparedPose
             if (parent < 0) {
                 std::copy_n(local, 16, world.begin());
             } else {
-                world = simd ? multiply_simd(context.world[parent], local) : multiply(context.world[parent], local);
+                world = kernel >= 2 ? multiply_affine(context.world[parent], local)
+                    : kernel == 1 ? multiply_simd(context.world[parent], local)
+                                  : multiply(context.world[parent], local);
             }
             context.visible[bone] = context.visible[bone] != 0 && (parent < 0 || context.visible[parent] != 0);
             const float *inverse = context.inverse.data() + bone * 16;
-            Matrix palette = simd ? multiply_simd(world, inverse) : multiply(world, inverse);
+            Matrix palette = kernel >= 2 ? multiply_affine(world, inverse)
+                : kernel == 1 ? multiply_simd(world, inverse) : multiply(world, inverse);
             if (!context.visible[bone]) {
                 palette = {};
                 palette[15] = 1;
