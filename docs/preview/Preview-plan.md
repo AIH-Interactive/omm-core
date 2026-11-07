@@ -498,3 +498,9 @@ Measure-Preview.ps1默认Threads=1（Java1/native1×CPU/GPU），可显式-Threa
 ### 2026-11-07 旧版基线检查点
 
 old.ysm 四组合已完成，各 3000 聚焦采样帧、可见/提交 1。CPU native 相对同轮 Java -2.19%，GPU -8.50%，完整成绩保存在 unlit-v1 报告；不重复旧基线。下一步 P2 仅单线程骨骼准备优化，主 M3–M6 暂停。
+
+### 2026-11-07 P2检查点与最新抽样要求
+
+P2单线程骨骼顺序执行已构建并通过60帧实窗数值/shader对照；四类16组合正式实窗均完整，但仅目录CPU、FiguraGPU相对Java提升，仍未总体全绿。结果与下一热点见 Benchmark-analysis.md / bones-v1。最终多模型尚未开始，主M3–M6继续暂停。
+
+用户最新明确每次模型重新随机抽样：从下一轮起四类各随机抽样一次，记录种子与清单，同轮Java/native CPU/GPU复用同一样本。此要求覆盖上文和旧交接中的固定样本约束。汇报用表格，只列相对Java差值/百分比。可以参考OpenYSM及Sparkle-Morpher实现进行最小热点优化。

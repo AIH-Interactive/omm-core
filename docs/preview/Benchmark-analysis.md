@@ -71,3 +71,26 @@
 12组各120预热+5×600聚焦采样帧，可见/提交均1；原图像、动画、模型、相机与采样参数保留。目录与加密样本分别沿用原seed42抽样，不换模型。结果独立保存在 [P1 CPU](unlit-v1/Benchmark-CPU.md) / [P1 GPU](unlit-v1/Benchmark-GPU.md)。相对同轮Java：目录CPU -6.00%、GPU -3.93%；加密CPU -5.04%、GPU -13.60%；Figura CPU +10.79%、GPU +11.89%。本轮尚未全绿，后续继续GPU骨骼/提交实验。
 
 三骨骼、10万不同owner顶点的真实窗口shader输出对照通过，涵盖反射、非均匀缩放、零缩放及原UV，日志test-unlit-visible-window.log。源无窗口微基准只保留为历史证据；用户要求测试仅用实窗后，已将其源移到build历史目录，新增的正式测试入口PreviewUnlitVertexWindowTest只创建真实窗口执行，没有无窗口模式。后续不再运行无窗口测试/微基准。
+
+## P2：单线程骨骼顺序执行实验（2026-11-07）
+
+仅修改预览 JNI compose：单线程沿已校验拓扑顺序组合 world/palette，省去 depth/levels 分配和逐层执行器调度；保留 double 中间矩阵、范围/顺序/有限仿射校验及多线程路径。生产 pose ABI 未变。
+
+Release 构建 PASS（build/preview/build-bones-v1.log）。新增 PreviewBoneWindowTest 修改前后各 60 帧真实可见窗口 PASS，覆盖 96 骨骼两条反向索引链、非零子范围、反射/非均匀/零缩放、world/palette/继承可见性和实际 GPU 输出对照；test-bones-before.log / test-bones-after.log。
+
+四类共16组合实窗完成，各120预热+3000聚焦采样帧，可见/提交1。首次目录 Java 启动因外层与脚本同时写 build.log 失败，已保留 failed metadata；重试改用独立外层日志，内部 build.log 保持前台 Tee。失败不计成绩。结果见 [CPU](bones-v1/Benchmark-CPU.md)、[GPU](bones-v1/Benchmark-GPU.md)。
+
+| 样本 | 路径 | Java FPS | Native FPS | 相对 Java ΔFPS | 相对 Java |
+|---|---|---:|---:|---:|---:|
+| 08_sta | CPU | 504.25 | 742.48 | +238.23 | 🟢 +47.24% |
+| 08_sta | GPU | 1084.30 | 984.67 | -99.63 | 🔴 -9.19% |
+| 加密霜狐 | CPU | 1430.63 | 1238.99 | -191.64 | 🔴 -13.40% |
+| 加密霜狐 | GPU | 1581.01 | 1461.68 | -119.33 | 🔴 -7.55% |
+| Figura | CPU | 661.20 | 570.19 | -91.01 | 🔴 -13.76% |
+| Figura | GPU | 972.18 | 1055.60 | +83.42 | 🟢 +8.58% |
+| old.ysm | CPU | 957.63 | 891.87 | -65.76 | 🔴 -6.87% |
+| old.ysm | GPU | 1338.75 | 1186.04 | -152.70 | 🔴 -11.41% |
+
+正确性通过，但总体性能未达标。GPU 路径 native 骨骼均仍慢于本轮 Java：目录0.109/0.054、加密0.025/0.014、Figura0.030/0.021、旧版0.047/0.025 ms。提交差距仅约0.001–0.002 ms（Figura native 更低），当前优先继续检查骨骼的 JNI 数据转换、矩阵计算及缓冲复用。Present/动画亦有轮次波动，不把总FPS差异全部归为骨骼。用户授权参考 OpenYSM / Sparkle-Morpher 后尝试最小优化。
+
+用户最新更正：后续汇报使用表格，只记录相对同条件 Java 的 FPS 差值和百分比；不再列相对旧 native 的提升。从下一轮起每轮四类各重新随机抽样并保存种子/清单；同轮 Java/native × CPU/GPU 共用对应样本以保证比较，历史结果不删除。该要求覆盖先前固定样本不重抽规则。

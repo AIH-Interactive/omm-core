@@ -1,11 +1,20 @@
+## 当前有效交接（2026-11-07）：P2 实验完成，性能未达标
+
+- 最新用户规则优先于下方历史：下一轮起每轮四类各重新随机抽样，保存种子/清单，同轮 Java/native CPU/GPU 共用对应样本；汇报用表格，只列相对 Java 的 FPS 差值和百分比。允许参考 refs/OpenYSM、refs/Sparkle-Morpher 做最小优化。
+- main；旧版基线检查点 2c9a28cf4c9b0e14860b8d03c7b2910f40468596 已推送确认。P2 源码、测试及报告尚未提交；其他 M3 修改必须保留，主 M3–M6 暂停。
+- P2：tools/preview/native/preview_vertices_jni.cpp 单线程跳过深度分桶和分层调度，保持 double 中间矩阵及校验；tools/preview/tests/PreviewBoneWindowTest.java 新增真实窗口对照。Release 构建、修改前后各60帧world/palette/可见性/实际GPU对照 PASS。
+- bones-v1 四类16组合完整，各3000聚焦帧、可见/提交1；相对Java：目录CPU +47.24% / GPU -9.19%，加密CPU -13.40% / GPU -7.55%，FiguraCPU -13.76% / GPU +8.58%，旧版CPU -6.87% / GPU -11.41%。未总体全绿。首次日志占用失败保留并排除；当前无活动测试。
+- 日志 build/preview/build-bones-v1.log、test-bones-before.log、test-bones-after.log；正式原始数据 build/preview/benchmark/bones-v1，报告 docs/preview/bones-v1；构建产物与路径见下方。没有改Java生产源码，JAR未重建，DLL已重建。
+- 下一最小任务：完成P2检查点提交推送；然后参考两项目，优先定位 JNI 骨骼矩阵转换/计算/缓冲复用，因为四类GPU骨骼耗时仍高于Java。不要恢复其他功能或提前最终多模型。人工视觉 MANUAL/PENDING。
+- 周额度最近剩59%，banked reset 可用2次。用户授权周剩<=2%时优先自动使用可用reset，成功后查询继续；不可用/无法执行则按原规则安全交接。目前未使用reset。
 ## 当前有效交接（2026-11-07）：专项优化已接续
 
 - 当前主要持续性目标为固定四类样本单线程专项优化；原主 M3–M6 保持暂停。下方历史状态如有冲突以本节为准。
 - main / ac8b1f50844b94d75a6f035ee0c7cf188c353d73，P1 已推送。旧版 old.ysm 四组合 metadata 均 complete / exitCode 0，结果已保存，无需重测旧基线。各 3000 聚焦采样帧、可见/提交 1；CPU native 881.64 FPS，相对 Java -19.70 / -2.19%；GPU native 1377.27 FPS，相对 Java -127.89 / -8.50%。
-- P2 尚未修改源码。已核对 compose 每帧建立 depth/seen/levels/world 并按层调度；下一步仅优化单线程骨骼准备，保持 Java/native world、palette、可见性语义及真实窗口验证。其他未提交 M3 修改全部保留。
+- 旧版基线检查点 2c9a28cf4c9b0e14860b8d03c7b2910f40468596 已提交推送，远端 main 已核对。P2 已最小修改单线程 compose，跳过深度分桶与逐层调度；构建及修改前后 60 帧实窗骨骼/shader 对照 PASS。正在执行 bones-v1 四类单模型复测，尚未全绿。原计划下一步描述为历史：已核对 compose 每帧建立 depth/seen/levels/world 并按层调度；下一步仅优化单线程骨骼准备，保持 Java/native world、palette、可见性语义及真实窗口验证。其他未提交 M3 修改全部保留。
 - 固定样本与启动方式见 tools/preview/README.md、docs/preview/Preview-plan.md、docs/preview/Benchmark-analysis.md；配置位于 build/preview/benchmark/random，旧版为 legacy-single.json。JAR 为 build/preview/preview.jar，DLL 为 build/windows-x64-Release/bin/Release/omm_core.dll。
 - 仅真实可见 Windows 窗口测试；不运行无窗口测试/微基准，不启动 Minecraft。优化期间仅四类单模型 Java/native1 × CPU/GPU，所有路径完成后再最终多模型矩阵。逐组合更新报告，保留下降；人工视觉 MANUAL/PENDING。
-- 可靠额度接口：周已用 41%，剩余 59%，未触发 Luna 交接。当前尚未总体全绿，P2 与最终矩阵未完成。
+- 可靠额度接口：周已用 41%，剩余 59%，可用 banked reset 2 次。用户新增授权：周剩余 <=2% 时优先自动使用可用 banked reset，成功后重新查询并继续；不可用或无法执行时按原规则安全交接。尚未使用重置。当前尚未总体全绿，P2 与最终矩阵未完成。
 > 新会话发送状态：用户要求重试后已成功创建并发送到“单线程专项优化：实窗总体全绿”，threadId=01a1b5c4-0a4d-7830-939e-601f4ebd740e，hostId=local。原会话总目标保持paused。
 
 ## 当前主要持续性目标：专项优化，覆盖旧版YSM

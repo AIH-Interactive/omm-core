@@ -96,7 +96,9 @@ extern "C" JNIEXPORT void JNICALL Java_top_aihmc_omm_preview_PreviewNativeVertic
         auto *visible = static_cast<uint8_t *>(records(visible_buffer, count));
         auto *world_output = static_cast<float *>(records(world_buffer, static_cast<size_t>(count) * 16));
         auto *palette_output = static_cast<float *>(records(palette_buffer, static_cast<size_t>(count) * 16));
-        std::vector<size_t> depth(count);
+        const auto &runtime = instance->model->storage.runtime();
+        const bool serial = runtime->worker_count == 1;
+        std::vector<size_t> depth(serial ? 0 : count);
         std::vector<bool> seen(count, false);
         std::vector<std::vector<size_t>> levels;
         size_t visited = 0;
@@ -112,11 +114,13 @@ extern "C" JNIEXPORT void JNICALL Java_top_aihmc_omm_preview_PreviewNativeVertic
                 throw std::invalid_argument(
                     "preview skeleton order must visit each parent before its children");
             }
-            depth[index] = parent < 0 ? 0 : depth[parent - offset] + 1;
-            if (levels.size() <= depth[index]) {
-                levels.resize(depth[index] + 1);
+            if (!serial) {
+                depth[index] = parent < 0 ? 0 : depth[parent - offset] + 1;
+                if (levels.size() <= depth[index]) {
+                    levels.resize(depth[index] + 1);
+                }
+                levels[depth[index]].push_back(index);
             }
-            levels[depth[index]].push_back(index);
             seen[index] = true;
             ++visited;
         }
@@ -124,21 +128,17 @@ extern "C" JNIEXPORT void JNICALL Java_top_aihmc_omm_preview_PreviewNativeVertic
             throw std::invalid_argument("preview skeleton order does not cover the requested range");
         }
         std::vector<omm::model::Matrix4> world(count);
-        const auto &runtime = instance->model->storage.runtime();
-        for (const auto &level : levels) {
-            runtime->cpu_executor->run(level.size(), [&](size_t task) {
-                const size_t index = level[task];
-                omm::model::Matrix4 matrix;
-                std::copy_n(local + index * 16, 16, matrix.begin());
-                if (!omm::model::is_finite_affine(matrix)) {
-                    throw std::invalid_argument("preview local pose is not finite affine");
-                }
-                const int32_t parent = parents[index + offset];
-                world[index] = parent < 0 ? matrix : omm::model::multiply(world[parent - offset], matrix);
-                visible[index] = visible[index] != 0 && (parent < 0 || visible[parent - offset] != 0);
-            });
-        }
-        runtime->cpu_executor->run(count, [&](size_t index) {
+        const auto compose_world = [&](size_t index) {
+            omm::model::Matrix4 matrix;
+            std::copy_n(local + index * 16, 16, matrix.begin());
+            if (!omm::model::is_finite_affine(matrix)) {
+                throw std::invalid_argument("preview local pose is not finite affine");
+            }
+            const int32_t parent = parents[index + offset];
+            world[index] = parent < 0 ? matrix : omm::model::multiply(world[parent - offset], matrix);
+            visible[index] = visible[index] != 0 && (parent < 0 || visible[parent - offset] != 0);
+        };
+        const auto write_palette = [&](size_t index) {
             omm::model::Matrix4 bind;
             std::copy_n(inverse + (index + offset) * 16, 16, bind.begin());
             auto palette = omm::model::multiply(world[index], bind);
@@ -150,7 +150,26 @@ extern "C" JNIEXPORT void JNICALL Java_top_aihmc_omm_preview_PreviewNativeVertic
                 world_output[index * 16 + value] = static_cast<float>(world[index][value]);
                 palette_output[index * 16 + value] = static_cast<float>(palette[value]);
             }
-        });
+        };
+        if (serial) {
+            // The validated order already satisfies dependencies. A single participant
+            // needs neither depth buckets nor per-level executor dispatch.
+            for (size_t position = 0; position < total; ++position) {
+                const int32_t bone = order[position];
+                if (bone >= offset && bone < offset + count) {
+                    const size_t index = static_cast<size_t>(bone - offset);
+                    compose_world(index);
+                    write_palette(index);
+                }
+            }
+        } else {
+            for (const auto &level : levels) {
+                runtime->cpu_executor->run(level.size(), [&](size_t task) {
+                    compose_world(level[task]);
+                });
+            }
+            runtime->cpu_executor->run(count, write_palette);
+        }
     } catch (const std::exception &failure) {
         if (!env->ExceptionCheck()) {
             if (const auto type = env->FindClass("java/lang/IllegalStateException")) {
