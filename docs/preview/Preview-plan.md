@@ -523,3 +523,6 @@ operations-v4/v5/v6：增加同world/palette/visibility缓冲契约的发布计�
 operations-v2/v3：独立native预备上下文与SSE2候选计时完成，生产未接入；SSE2组合周期仍慢于Java约65%～70%，保留全部下降，下一步参数直算/减少往返。当前优先单线程；Java预览器CPU算法源码确认为单线程串行，详见Benchmark-analysis.md。
 最新用户更正：候选阶段仅操作耗时测试，可用真实模型，暂不需要实窗。operations-v1四类新随机样本无窗口计时已完成，详见operations-v1/Report.md；native组合周期仍慢于Java，直接打包候选收益不足抵消差距，尚未选择或集成最佳组合。下一步独立native姿态参数/结果发布候选。
 用户要求先单元测试确认候选组合，再集成omm-core。首个输出隔离候选已完成实窗RED/GREEN（共享缓冲覆盖错误→每实例输出正确），详见Benchmark-analysis.md和PreviewPoseCandidateWindowTest.java。该步骤无生产变更、无性能通过结论；native直写/TRS候选及四类随机实窗性能筛选待完成，整体专项与最终多模型仍未完成。
+
+### 2026-11-07 palette 延迟回填检查点
+operations-v12 历史计时已完整归档，四类 native 仍慢于同契约 Java。60 帧真实窗口骨骼/直接发布/CPU-GPU shader 数值验证 exit 0；State 包装和真实资产端到端尚待验证。后续仅实窗测试，整体优化及最终多模型未完成。详见 operations-v12/Report.md。

@@ -398,7 +398,7 @@ public final class PreviewMain {
                     animationState.sample(frameId, time);
                     frame.animationMs = (System.nanoTime() - sampleStart) / 1e6;
                     long bonesStart = System.nanoTime();
-                    animationState.updateBones(nativeVertices);
+                    animationState.updateBonesForRender(nativeVertices);
                     framePalette = animationState.paletteBuffer(paletteValues);
                     frame.bonesMs = (System.nanoTime() - bonesStart) / 1e6;
                 }

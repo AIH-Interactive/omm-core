@@ -190,6 +190,7 @@ final class PreviewAnimation implements AutoCloseable {
         final Matrix4f[] palette = new Matrix4f[skeleton.names.length];
         private FloatBuffer publishedPalette;
         private boolean publishedPaletteReady;
+        private boolean paletteObjectsCurrent = true;
         private final boolean[] defaults = mesh.figuraParts == null
             ? YsmVisibilityDefaults.visibility(mesh, host, false)
             : skeleton.defaultVisible.clone();
@@ -427,7 +428,16 @@ final class PreviewAnimation implements AutoCloseable {
         }
 
         void updateBones(PreviewNativeVertices nativeVertices) {
+            updateBones(nativeVertices, true);
+        }
+
+        void updateBonesForRender(PreviewNativeVertices nativeVertices) {
+            updateBones(nativeVertices, false);
+        }
+
+        private void updateBones(PreviewNativeVertices nativeVertices, boolean readPaletteObjects) {
             publishedPaletteReady = false;
+            paletteObjectsCurrent = true;
             if (nativeVertices == null) {
                 updateBoneMatrices(null);
                 return;
@@ -438,7 +448,7 @@ final class PreviewAnimation implements AutoCloseable {
                                        .order(ByteOrder.nativeOrder()).asFloatBuffer();
                 writePalette(publishedPalette);
             }
-            nativeVertices.beginPublication(publishedPalette);
+            nativeVertices.beginPublication(publishedPalette, readPaletteObjects);
             boolean written;
             try {
                 updateBoneMatrices(nativeVertices);
@@ -449,6 +459,7 @@ final class PreviewAnimation implements AutoCloseable {
                 writePalette(publishedPalette);
             }
             publishedPaletteReady = true;
+            paletteObjectsCurrent = !written || readPaletteObjects;
         }
 
         private void updateBoneMatrices(PreviewNativeVertices nativeVertices) {
@@ -518,6 +529,7 @@ final class PreviewAnimation implements AutoCloseable {
         }
 
         void writePalette(FloatBuffer output) {
+            paletteMatrices();
             output.clear();
             for (Matrix4f matrix : palette) {
                 // Use NIO writes: JOML's Unsafe FloatBuffer writer assumes native-address storage.
@@ -535,6 +547,16 @@ final class PreviewAnimation implements AutoCloseable {
             }
             writePalette(scratch);
             return scratch;
+        }
+
+        Matrix4f[] paletteMatrices() {
+            if (!paletteObjectsCurrent) {
+                for (int bone = 0; bone < palette.length; bone++) {
+                    palette[bone].set(bone * 16, publishedPalette);
+                }
+                paletteObjectsCurrent = true;
+            }
+            return palette;
         }
 
         private YsmBonePose weighted(YsmBonePose pose, float weight) {

@@ -1,3 +1,12 @@
+## 最新续接检查点（2026-11-07）：palette 延迟回填待真实资产验证
+
+- 当前 main，前已推送架构文档检查点 4661d4e。本轮修改限预览器 State/NativeVertices/渲染消费者、操作计时入口和实窗骨骼测试；其余 M3 修改保留。
+- operations-v12 四类历史无窗口 CSV 共 320 行完整，四类 Saved 日志完整，原句柄 95636 已不存在，未在续接中取得原退出码。报告与清单已保存 docs/preview/operations-v12；所有同契约 native 操作仍慢于 Java，不宣称达标。
+- palette 每状态直接缓冲保留，render 更新跳过 palette 对象回填；剔除和快照通过 paletteMatrices 按需同步，world 和可见性仍逐帧回填。旧 updateBones 保留全对象同步行为。
+- 本次真实可见 GLFW 窗口验证 exit 0：build/preview/test-lazy-palette-window.log。60 帧覆盖反向层级、offset、反射/零缩放、可见性、交替直接缓冲发布及对象回填、CPU/GPU shader 数值一致性。编译成功。
+- 尚未覆盖 Animation.State 延迟同步包装、真实模型动画/Lua/剔除和单模型 CPU/GPU FPS；下一最小任务验证这些消费者，再测固定样本真实窗口矩阵。最终多模型未开始，不恢复 M3–M6。当前无活动测试进程。
+- 当前用户 AGENTS 要求后续测试仅真实可见窗口；历史无窗口计时保留，不再启动无窗口测试。新轮使用原抽样四类样本，同场景 Java/native 单线程对照，只汇报相对 Java 差值。人工视觉 MANUAL/PENDING。
+- 本轮专项准备提交推送；提交结果以 Git 当前 HEAD 与远端核对为准。
 ## 当前有效交接（2026-11-07）：独立候选测试先行
 
 - 子智能体render_architecture_comparison已完成并交付docs/preview/OYSM-SPM-Acceleration-Architecture.md，约300行详细中文，含OYSM/SPM模型处理、CPU SIMD、常规GPU/Iris/portable路径、缓冲与生命周期、同omm-core对照和源码索引。主线程已审阅，diff --check通过；未运行参考项目或编造FPS。

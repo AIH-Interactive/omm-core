@@ -29,6 +29,7 @@ public final class PreviewPoseOperationBenchmark {
         final ByteBuffer publishedVisibility;
         final PreviewNativeVertices bridge;
         final PreviewPreparedPoseCandidate prepared;
+        final Matrix4f paletteScratch = new Matrix4f();
 
         Work(PreviewMesh mesh, PreviewConfig config) {
             skeleton = mesh.skeleton;
@@ -147,8 +148,36 @@ public final class PreviewPoseOperationBenchmark {
                     }
                     consumed = output.get(output.capacity() - 4);
                 }
+                case 14 -> publishWorldAndPalette();
+                case 15 -> {
+                    bridge.beginPublication(output, false);
+                    try {
+                        compose(1);
+                    } finally {
+                        bridge.endPublication();
+                    }
+                    consumed = output.get(output.capacity() - 4);
+                }
                 default -> throw new IllegalArgumentException("Unknown operation");
             }
+        }
+
+        void publishWorldAndPalette() {
+            for (int bone : skeleton.order) {
+                int parent = skeleton.parents[bone];
+                if (parent < 0) {
+                    world[bone].set(local[bone]);
+                } else {
+                    world[bone].set(world[parent]).mul(local[bone]);
+                }
+                visible[bone] = skeleton.restVisible[bone] && (parent < 0 || visible[parent]);
+                paletteScratch.set(world[bone]).mul(skeleton.inverseBindWorld[bone]);
+                if (!visible[bone]) {
+                    paletteScratch.scaling(0);
+                }
+                paletteScratch.get(bone * 16, output);
+            }
+            consumed = output.get(output.capacity() - 4);
         }
 
         @Override
@@ -169,7 +198,8 @@ public final class PreviewPoseOperationBenchmark {
             "candidate_direct_pack", "candidate_prepared_cycle", "candidate_simd_cycle",
             "java_publish", "candidate_direct_publish", "candidate_affine_publish",
             "candidate_checked_simd_publish", "candidate_avx_publish", "candidate_batched_avx_publish",
-            "java_objects_and_palette", "native_objects_and_palette"};
+            "java_objects_and_palette", "native_objects_and_palette",
+            "java_world_and_palette_buffer", "native_world_and_palette_buffer"};
         try (var report = new PrintWriter(Files.newBufferedWriter(Path.of(args[2])))) {
             report.println("kind,bones,operation,round,iterations,ns_per_operation");
             report.flush();

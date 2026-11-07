@@ -77,7 +77,17 @@ public final class PreviewBoneWindowTest {
                 : new Matrix4f(expected[parent - offset]).mul(local[index]);
             expectedVisible[index] = visible[index] && (parent < 0 || expectedVisible[parent - offset]);
         }
-        nativeVertices.compose(offset, count, local, palette, visible);
+        boolean directPublication = frame % 2 == 0;
+        if (directPublication) {
+            nativeVertices.beginPublication(output, false);
+        }
+        try {
+            nativeVertices.compose(offset, count, local, palette, visible);
+        } finally {
+            if (directPublication && !nativeVertices.endPublication()) {
+                throw new AssertionError("Native palette was not published");
+            }
+        }
         for (int index = 0; index < count; index++) {
             near(local[index], expected[index]);
             Matrix4f expectedPalette = new Matrix4f(expected[index])
@@ -85,11 +95,18 @@ public final class PreviewBoneWindowTest {
             if (!expectedVisible[index]) {
                 expectedPalette.scaling(0);
             }
-            near(palette[index], expectedPalette);
+            if (directPublication) {
+                near(palette[index], new Matrix4f());
+                near(new Matrix4f().set((index + offset) * 16, output), expectedPalette);
+            } else {
+                near(palette[index], expectedPalette);
+            }
             if (visible[index] != expectedVisible[index]) {
                 throw new AssertionError("Inherited visibility differs");
             }
-            palette[index].get((index + offset) * 16, output);
+            if (!directPublication) {
+                palette[index].get((index + offset) * 16, output);
+            }
         }
     }
 

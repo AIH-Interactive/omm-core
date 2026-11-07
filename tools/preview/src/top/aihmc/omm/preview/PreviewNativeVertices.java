@@ -23,6 +23,7 @@ final class PreviewNativeVertices implements AutoCloseable {
     private ByteBuffer visibility;
     private FloatBuffer publication;
     private boolean published;
+    private boolean readPaletteObjects = true;
     private record PreparedRange(int offset, int count) {}
     private final ArrayList<PreparedRange> preparedRanges = new ArrayList<>();
 
@@ -113,7 +114,9 @@ final class PreviewNativeVertices implements AutoCloseable {
             threads == 1);
         for (int bone = 0; bone < count; bone++) {
             localWorld[bone].set(bone * 16, worldValues);
-            palette[bone].set(bone * 16, result);
+            if (readPaletteObjects) {
+                palette[bone].set(bone * 16, result);
+            }
             visible[bone] = visibility.get(bone) != 0;
         }
         published = true;
@@ -134,15 +137,21 @@ final class PreviewNativeVertices implements AutoCloseable {
     private static native void prepare(long instance, int offset, int count, IntBuffer parents, IntBuffer order);
 
     void beginPublication(FloatBuffer output) {
+        beginPublication(output, true);
+    }
+
+    void beginPublication(FloatBuffer output, boolean readObjects) {
         if (publication != null) {
             throw new IllegalStateException("A preview pose publication is already active");
         }
         publication = output;
         published = false;
+        readPaletteObjects = readObjects;
     }
 
     boolean endPublication() {
         publication = null;
+        readPaletteObjects = true;
         return published;
     }
 

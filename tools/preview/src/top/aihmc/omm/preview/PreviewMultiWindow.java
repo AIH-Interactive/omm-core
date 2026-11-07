@@ -305,7 +305,7 @@ final class PreviewMultiWindow {
                     instance.state.sample(frameId, animationTime(instance, time));
                     frame.animationMs += (System.nanoTime() - start) / 1e6;
                     start = System.nanoTime();
-                    instance.state.updateBones(instance.source.renderer.nativeVertices);
+                    instance.state.updateBonesForRender(instance.source.renderer.nativeVertices);
                     frame.bonesMs = Math.max(0, frame.bonesMs) + (System.nanoTime() - start) / 1e6;
                 }
                 glViewport(0, 0, width, height);
@@ -405,7 +405,7 @@ final class PreviewMultiWindow {
             var instance = instances.get(index);
             var matrices = new ArrayList<float[]>();
             if (instance.state != null)
-                for (var matrix : instance.state.palette) matrices.add(matrix.get(new float[16]));
+                for (var matrix : instance.state.paletteMatrices()) matrices.add(matrix.get(new float[16]));
             snapshots.add(Map.of("instance", index, "palette", matrices));
         }
         Files.writeString(

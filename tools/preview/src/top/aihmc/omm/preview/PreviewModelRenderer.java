@@ -87,7 +87,7 @@ final class PreviewModelRenderer implements AutoCloseable {
     }
 
     boolean visible(FrustumIntersection frustum, Matrix4f placement, PreviewAnimation.State state) {
-        Matrix4f[] palette = state == null ? initial : state.palette;
+        Matrix4f[] palette = state == null ? initial : state.paletteMatrices();
         float minX = Float.POSITIVE_INFINITY, minY = minX, minZ = minX;
         float maxX = Float.NEGATIVE_INFINITY, maxY = maxX, maxZ = maxX;
         for (int bone = 0; bone < bounds.length; bone++) {
