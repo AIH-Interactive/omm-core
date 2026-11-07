@@ -1,5 +1,6 @@
 #include <jni.h>
 #include <emmintrin.h>
+#include <intrin.h>
 
 #include <algorithm>
 #include <array>
@@ -10,11 +11,17 @@
 #include <stdexcept>
 #include <vector>
 
+std::array<double, 16> multiply_affine_avx(const std::array<double, 16> &left, const float *right);
+void publish_affine_avx(size_t count, const int32_t *order, const int32_t *parents, const float *inverse,
+    const float *local_values, std::array<double, 16> *world_values, float *world_output,
+    float *palette_output, uint8_t *visible);
+
 namespace {
 using Matrix = std::array<double, 16>;
 
 // Test-only, single-caller context. Java owns and retains the direct frame storage.
 struct Context {
+    bool avx2 = false;
     std::vector<jint> parents;
     std::vector<jint> order;
     std::vector<float> inverse;
@@ -24,6 +31,20 @@ struct Context {
     float *palette_output = nullptr;
     uint8_t *visible = nullptr;
 };
+
+bool supports_avx2() {
+    int registers[4];
+    __cpuid(registers, 0);
+    if (registers[0] < 7) {
+        return false;
+    }
+    __cpuidex(registers, 1, 0);
+    if ((registers[2] & (1 << 27)) == 0 || (registers[2] & (1 << 28)) == 0 || (_xgetbv(0) & 6) != 6) {
+        return false;
+    }
+    __cpuidex(registers, 7, 0);
+    return (registers[1] & (1 << 5)) != 0;
+}
 
 Matrix multiply(const Matrix &left, const float *right) {
     Matrix result;
@@ -109,6 +130,7 @@ extern "C" JNIEXPORT jlong JNICALL Java_top_aihmc_omm_preview_PreviewPreparedPos
             throw std::invalid_argument("Invalid candidate skeleton buffers");
         }
         auto context = std::make_unique<Context>();
+        context->avx2 = supports_avx2();
         context->parents.resize(count);
         context->order.resize(count);
         context->inverse.resize(count * 16);
@@ -156,9 +178,18 @@ extern "C" JNIEXPORT void JNICALL Java_top_aihmc_omm_preview_PreviewPreparedPose
     JNIEnv *env, jclass, jlong handle, jint kernel) {
     try {
         auto &context = *reinterpret_cast<Context *>(handle);
+        if (kernel >= 4 && !context.avx2) {
+            throw std::invalid_argument("AVX2 candidate unavailable on this CPU/OS");
+        }
+        if (kernel == 5) {
+            publish_affine_avx(context.order.size(), context.order.data(), context.parents.data(),
+                context.inverse.data(), context.local, context.world.data(), context.world_output,
+                context.palette_output, context.visible);
+            return;
+        }
         for (jint bone : context.order) {
             const float *local = context.local + bone * 16;
-            const bool valid = kernel == 3 ? finite_affine_simd(local)
+            const bool valid = kernel >= 3 ? finite_affine_simd(local)
                 : std::all_of(local, local + 16, [](float value) { return std::isfinite(value); }) &&
                     local[3] == 0 && local[7] == 0 && local[11] == 0 && local[15] == 1;
             if (!valid) {
@@ -169,13 +200,15 @@ extern "C" JNIEXPORT void JNICALL Java_top_aihmc_omm_preview_PreviewPreparedPose
             if (parent < 0) {
                 std::copy_n(local, 16, world.begin());
             } else {
-                world = kernel >= 2 ? multiply_affine(context.world[parent], local)
+                world = kernel == 4 ? multiply_affine_avx(context.world[parent], local)
+                    : kernel >= 2 ? multiply_affine(context.world[parent], local)
                     : kernel == 1 ? multiply_simd(context.world[parent], local)
                                   : multiply(context.world[parent], local);
             }
             context.visible[bone] = context.visible[bone] != 0 && (parent < 0 || context.visible[parent] != 0);
             const float *inverse = context.inverse.data() + bone * 16;
-            Matrix palette = kernel >= 2 ? multiply_affine(world, inverse)
+            Matrix palette = kernel == 4 ? multiply_affine_avx(world, inverse)
+                : kernel >= 2 ? multiply_affine(world, inverse)
                 : kernel == 1 ? multiply_simd(world, inverse) : multiply(world, inverse);
             if (!context.visible[bone]) {
                 palette = {};

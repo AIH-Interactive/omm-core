@@ -6,6 +6,8 @@
 
 追加发布候选：输出直接保留在每实例world/palette/visibility缓冲，不回填Java矩阵；与同输出契约的java_publish比较。仿射核校验inverse bind末行后省去零乘法；checked_simd核使用SSE比较float绝对值与最大有限值，保留NaN/Inf及仿射末行检查。该输出契约尚未适配生产脚本和剔除消费者，不能把它的操作收益直接当作生产收益。
 
+AVX2候选仅pose_avx.cpp使用/arch:AVX2，入口先检查CPU特性和XGETBV。逐矩阵AVX调用与整批AVX调用均保留计时；整批版本包含整个骨骼循环、8-lane有限值检查及向量化输出转换。它仍使用double中间矩阵，未启用FMA或fast-math。不支持AVX2时明确失败，不用其他候选冒充该项成绩。
+
 从仓库根目录以前台PowerShell执行，每条构建/测试命令后立即检查退出码：
 
 ```powershell

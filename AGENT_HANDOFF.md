@@ -1,5 +1,10 @@
 ## 当前有效交接（2026-11-07）：独立候选测试先行
 
+- operations-v7/v8已完成exit0，无活动进程。独立AVX2编译单元pose_avx.cpp+CPUID/XGETBV检测；v7逐矩阵调用不稳定，v8整批骨骼循环+8-lane finite检查+向量化double→float输出为本轮最佳候选。保留双精度、单线程、finite/affine校验，无fast-math，生产未接入。
+- v8随机芙宁娜1（206骨骼）、绯英高模v1.0.ysm（151）、苍梧吟月Pro.zip（1319）、old.ysm（206）；batched_avx发布耗时相对同契约Java为-55.72%/-57.07%/-56.10%/-55.84%。完整原始CSV、manifest、报告与v8产物哈希在docs/preview/operations-v7/v8。Figura外部纹理缺失诊断保留，计时不证明画质。没有运行实窗。
+- 下一步选整批AVX2作为集成候选：先完成生产子范围offset、每实例输出/生命周期、非AVX路径决策，处理脚本world读取、剔除palette与CPU/GPU消费者，随后正确性与真实性能验证。不得把同缓冲契约操作收益当成现生产收益；原目标尚未完成。参考现有PreviewBoneWindowTest的offset/反向顺序覆盖，但用户当前候选阶段仅计时，实窗暂不启动。
+- 前检查点c94d9ae05be1a8b2ab340845ae3a4037d4678727已推送；本轮测试/报告准备提交检查点。其他M3修改保留，主M3–M6未恢复。
+
 - operations-v4/v5/v6已全部exit0，无活动进程。新增同输出契约的Java/native发布计时：每实例直接world/palette/visibility缓冲，不回填Matrix4f。独立候选继续组合预备拓扑/连续存储/SSE2/仿射乘法/向量化finite校验，生产路径未改。表中只比较java_publish，不能与旧compose_cycle或FPS混比。
 - v6随机02_new_year（138）、DS鲸鱼娘.ysm（208）、小符玄（3500）、old.ysm（206）。checked_simd发布相对Java耗时-12.32%/-11.28%/+2.96%/-11.77%；大Figura仍下降，尚非全绿。每操作10000预热+5×2000，完整CSV/manifest/报告在docs/preview/operations-v4/v5/v6，v6含DLL/JAR哈希。无窗口，仅计时，未作正确性通过主张。
 - v4 Figura苍梧吟月Pro.zip外部fs2000.png缺失诊断后完成解析和计时，原日志保留。生产矩阵对象消费者迁移成本仍需验证，不能把发布契约收益当成生产收益。下一步聚焦大Figura发布耗时/数据体积及姿态参数候选，保留double精度或先独立评估等同Java精度方案；未集成最佳组合。
