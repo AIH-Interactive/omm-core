@@ -1,5 +1,10 @@
 ## 当前有效交接（2026-11-07）：独立候选测试先行
 
+- 最新operations-v2/v3均完成exit0，独立测试DLL已构建（tools/preview/tests/pose-candidate，复现见README）。Java入口PreviewPreparedPoseCandidate及扩展计时器仅在test-classes，不改生产JAR/DLL。候选预校验拓扑/缓存地址/连续world存储/SSE2 double；保留local有限仿射校验、world/palette回填，当前仅完整骨架、单调用线程。
+- v3四类新随机15_kluonoa、少女-哥伦比娅.ysm、aylDWT 4.2.zip、old.ysm；SSE2组合周期相对Java耗时+67.89%/+65.87%/+69.66%/+65.19%，仍未达标。v2/v3清单、原始CSV与报告在docs/preview/operations-v2及v3。下一步独立参数直算/减少往返候选，不能宣称最优或直接集成。没有运行实窗。
+- 用户要求继续优先单线程并分析Java核心使用：已核对主循环/骨骼/顶点/多实例路径均串行，无工作线程派发；JVM/驱动后台线程与GPU另算，操作系统可迁移线程而非固定核心。分析见Benchmark-analysis.md。未做本轮进程线程采样。
+- main前检查点c3bd5587c402eb02a7a9fc6fe31981f655fad382已推送；本轮独立候选/报告待提交检查点，无活动测试。其他M3修改保留。
+
 - operations-v1无窗口操作计时已完成exit0：新随机03_astronaut（149骨骼）、末影龙娘.ysm（409）、小符玄（3500）、old.ysm（206），每类只加载一次；真实层级/inverse bind、受控局部姿态，无动画/Lua/GL。独立入口PreviewPoseOperationBenchmark.java；docs/preview/operations-v1含manifest、完整CSV与Report.md。每操作10000预热、5×2000计时。
 - native组合周期（含复位/打包/JNI/回填）相对Java耗时+158.29%/+152.00%/+211.62%/+152.18%；直接打包候选相对Java逐字段打包-26.57%/-21.94%/-18.22%/-21.95%。不能换算FPS。尚未确认最佳组合，未集成生产路径。下一步独立native姿态参数/直接发布候选，先降低组合链路开销，保留每实例输出及world语义。
 - 前一候选检查点d8e24d9a1706105c3548605ded6ec8fdf61b9beb已推送核对；本轮操作计时代码/记录准备专项检查点。无活动测试，其他M3改动保留。

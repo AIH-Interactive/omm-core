@@ -1,0 +1,98 @@
+{
+  "seed": 5007945313755781702,
+  "method": "Uniform choice per input stratum; casefold-sorted paths; no replacement after failure",
+  "pools": {
+    "ysm-folder": [
+      "D:\\UserData\\Desktop\\Project\\omm-core\\refs\\avatars\\01_taisho_maid",
+      "D:\\UserData\\Desktop\\Project\\omm-core\\refs\\avatars\\02_new_year",
+      "D:\\UserData\\Desktop\\Project\\omm-core\\refs\\avatars\\03_astronaut",
+      "D:\\UserData\\Desktop\\Project\\omm-core\\refs\\avatars\\04_kongfu",
+      "D:\\UserData\\Desktop\\Project\\omm-core\\refs\\avatars\\05_magical",
+      "D:\\UserData\\Desktop\\Project\\omm-core\\refs\\avatars\\06_hanfu",
+      "D:\\UserData\\Desktop\\Project\\omm-core\\refs\\avatars\\07_jk",
+      "D:\\UserData\\Desktop\\Project\\omm-core\\refs\\avatars\\08_sta",
+      "D:\\UserData\\Desktop\\Project\\omm-core\\refs\\avatars\\09_hailuo",
+      "D:\\UserData\\Desktop\\Project\\omm-core\\refs\\avatars\\10_zhiban",
+      "D:\\UserData\\Desktop\\Project\\omm-core\\refs\\avatars\\11_salesperson",
+      "D:\\UserData\\Desktop\\Project\\omm-core\\refs\\avatars\\12_little",
+      "D:\\UserData\\Desktop\\Project\\omm-core\\refs\\avatars\\13_matured",
+      "D:\\UserData\\Desktop\\Project\\omm-core\\refs\\avatars\\14_momo",
+      "D:\\UserData\\Desktop\\Project\\omm-core\\refs\\avatars\\15_kluonoa",
+      "D:\\UserData\\Desktop\\Project\\omm-core\\refs\\avatars\\16_tactics",
+      "D:\\UserData\\Desktop\\Project\\omm-core\\refs\\avatars\\17_mini",
+      "D:\\UserData\\Desktop\\Project\\omm-core\\refs\\avatars\\18_wedding",
+      "D:\\UserData\\Desktop\\Project\\omm-core\\refs\\avatars\\19_nine_tailed",
+      "D:\\UserData\\Desktop\\Project\\omm-core\\refs\\avatars\\20_survivor",
+      "D:\\UserData\\Desktop\\Project\\omm-core\\refs\\avatars\\21_saint",
+      "D:\\UserData\\Desktop\\Project\\omm-core\\refs\\avatars\\22_elf",
+      "D:\\UserData\\Desktop\\Project\\omm-core\\refs\\avatars\\default",
+      "D:\\UserData\\Desktop\\Project\\omm-core\\refs\\avatars\\Elaina",
+      "D:\\UserData\\Desktop\\Project\\omm-core\\refs\\avatars\\GI_Furina",
+      "D:\\UserData\\Desktop\\Project\\omm-core\\refs\\avatars\\hsr_fuxuan_1",
+      "D:\\UserData\\Desktop\\Project\\omm-core\\refs\\avatars\\YSM_NEW_Model",
+      "D:\\UserData\\Desktop\\Project\\omm-core\\refs\\avatars\\YSM_OLD_Model",
+      "D:\\UserData\\Desktop\\Project\\omm-core\\refs\\avatars\\ZZZ_Ellen_1",
+      "D:\\UserData\\Desktop\\Project\\omm-core\\refs\\avatars\\昔涟v1.1",
+      "D:\\UserData\\Desktop\\Project\\omm-core\\refs\\avatars\\纳西妲1",
+      "D:\\UserData\\Desktop\\Project\\omm-core\\refs\\avatars\\艺方原版娘化 发光鱿鱼娘",
+      "D:\\UserData\\Desktop\\Project\\omm-core\\refs\\avatars\\芙宁娜1",
+      "D:\\UserData\\Desktop\\Project\\omm-core\\refs\\avatars\\青衣1",
+      "D:\\UserData\\Desktop\\Project\\omm-core\\refs\\avatars\\鸣潮-达妮娅1.2"
+    ],
+    "ysm-encrypted": [
+      "D:\\UserData\\Desktop\\Project\\omm-core\\refs\\avatars\\_创伤小组_霜狐.ysm",
+      "D:\\UserData\\Desktop\\Project\\omm-core\\refs\\avatars\\DS鲸鱼娘.ysm",
+      "D:\\UserData\\Desktop\\Project\\omm-core\\refs\\avatars\\hsr_fuxuan_1.ysm",
+      "D:\\UserData\\Desktop\\Project\\omm-core\\refs\\avatars\\new.ysm",
+      "D:\\UserData\\Desktop\\Project\\omm-core\\refs\\avatars\\ZZZ_Ellen_1.ysm",
+      "D:\\UserData\\Desktop\\Project\\omm-core\\refs\\avatars\\八重神子.ysm",
+      "D:\\UserData\\Desktop\\Project\\omm-core\\refs\\avatars\\少女-哥伦比娅.ysm",
+      "D:\\UserData\\Desktop\\Project\\omm-core\\refs\\avatars\\希尔薇Sylvie.ysm",
+      "D:\\UserData\\Desktop\\Project\\omm-core\\refs\\avatars\\拉菲2兔女郎.ysm",
+      "D:\\UserData\\Desktop\\Project\\omm-core\\refs\\avatars\\昔涟v1.1.ysm",
+      "D:\\UserData\\Desktop\\Project\\omm-core\\refs\\avatars\\星屑海螺.ysm",
+      "D:\\UserData\\Desktop\\Project\\omm-core\\refs\\avatars\\末影龙娘.ysm",
+      "D:\\UserData\\Desktop\\Project\\omm-core\\refs\\avatars\\绯英.ysm",
+      "D:\\UserData\\Desktop\\Project\\omm-core\\refs\\avatars\\绯英高模v1.0.ysm",
+      "D:\\UserData\\Desktop\\Project\\omm-core\\refs\\avatars\\芙宁娜Lv.999-白v1.11.ysm",
+      "D:\\UserData\\Desktop\\Project\\omm-core\\refs\\avatars\\芙宁娜v3.14中文配音.ysm",
+      "D:\\UserData\\Desktop\\Project\\omm-core\\refs\\avatars\\银狼Lv.999v1.2.ysm"
+    ],
+    "figura": [
+      "D:\\UserData\\Desktop\\Project\\omm-core\\refs\\avatars\\AI Hobbyist Founder Public Server",
+      "D:\\UserData\\Desktop\\Project\\omm-core\\refs\\avatars\\AI Hobbyist Founder Public Server.zip",
+      "D:\\UserData\\Desktop\\Project\\omm-core\\refs\\avatars\\anan-fullmodel-0.0.7-rel.zip",
+      "D:\\UserData\\Desktop\\Project\\omm-core\\refs\\avatars\\aylDWT 4.2.zip",
+      "D:\\UserData\\Desktop\\Project\\omm-core\\refs\\avatars\\sickle.zip",
+      "D:\\UserData\\Desktop\\Project\\omm-core\\refs\\avatars\\wangshu.zip",
+      "D:\\UserData\\Desktop\\Project\\omm-core\\refs\\avatars\\小符玄",
+      "D:\\UserData\\Desktop\\Project\\omm-core\\refs\\avatars\\苍梧吟月Pro.zip"
+    ],
+    "ysm-legacy": [
+      "D:\\UserData\\Desktop\\Project\\omm-core\\refs\\avatars\\old.ysm"
+    ],
+    "ysm-package": []
+  },
+  "selected": [
+    {
+      "kind": "ysm-folder",
+      "path": "D:\\UserData\\Desktop\\Project\\omm-core\\refs\\avatars\\10_zhiban",
+      "sha256": "4b7883d3c2eb1a24ac0dbd52807cdd025abfb16816d222771aa6e8bbb52f8b13"
+    },
+    {
+      "kind": "ysm-encrypted",
+      "path": "D:\\UserData\\Desktop\\Project\\omm-core\\refs\\avatars\\昔涟v1.1.ysm",
+      "sha256": "bd037939149df2545e497493ed3417bf50d36bc093afb2f6893c0ee3982e9cda"
+    },
+    {
+      "kind": "figura",
+      "path": "D:\\UserData\\Desktop\\Project\\omm-core\\refs\\avatars\\wangshu.zip",
+      "sha256": "87b543a8b71a6dccc31236bc7c8ca5b88f75d150aba0192e8f2515179aecc0a1"
+    },
+    {
+      "kind": "ysm-legacy",
+      "path": "D:\\UserData\\Desktop\\Project\\omm-core\\refs\\avatars\\old.ysm",
+      "sha256": "94936ac3b8bee6b32f6d86436bc11e2bec40a5209a0e044c2247597afacc07f4"
+    }
+  ]
+}

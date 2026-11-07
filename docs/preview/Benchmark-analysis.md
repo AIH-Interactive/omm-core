@@ -135,6 +135,16 @@ bones-v2检查点20c383afc22075ce677115ed57fa8f59e643e0ed已推送。用户已�
 
 ## 参考架构与独立候选验证（2026-11-07）
 
+### Java渲染线程口径（2026-11-07源码核对）
+
+`PreviewMain`的窗口循环在同一调用线程依次执行sample、updateBones、CPU transform、GL提交和SwapBuffers。`PreviewCpuVertices.transform`是普通顶点for循环；`PreviewAnimation.State.updateBones`是普通骨骼for循环。`PreviewMultiWindow`同样按实例串行更新和绘制。这些路径没有线程池、parallel stream或任务派发。因此当前预览器Java的CPU渲染算法为单线程，不会同时用多个CPU核心执行这些循环；Windows可把该线程在不同核心间迁移，不能把单线程解释成固定绑定某核心。
+
+JVM的GC/JIT等后台工作以及图形驱动可另有线程；GPU shader在GPU并行执行。进程总CPU占用或多个核心活动不能直接证明Java骨骼/顶点算法并行。本轮未启动窗口做进程线程采样，上述结论来自完整主循环和对应计算函数源码，不外推到完整Minecraft渲染器。用户当前仍要求优先单线程优化。
+
+### 独立native候选计时
+
+operations-v2/v3在新的四类随机样本上完成无窗口操作测量，结果与完整原始轮次见对应目录Report.md及operations.csv。独立测试DLL组合了固定拓扑预校验、缓冲地址缓存、连续world存储及可选SSE2 double矩阵核，生产DLL/JAR未改。v3的SSE2完整组合周期相对Java耗时仍增加65.19%～69.66%，尚未达到筛选目标，不能称为最优解或开始生产集成。下步重点是参数直算/数据往返；本轮单元计时无渲染和正确性通过主张。
+
 用户更新顺序：先在独立测试中验证候选组合，随后性能筛选，确认后才集成omm-core。下面是本地源码的具体机制对比，不是四项目整体性能排名。
 
 | 项目及源码 | 已确认机制 | 当前候选用途 |

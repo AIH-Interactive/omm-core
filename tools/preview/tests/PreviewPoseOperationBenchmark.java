@@ -25,6 +25,7 @@ public final class PreviewPoseOperationBenchmark {
         final boolean[] visible;
         final FloatBuffer output;
         final PreviewNativeVertices bridge;
+        final PreviewPreparedPoseCandidate prepared;
 
         Work(PreviewMesh mesh, PreviewConfig config) {
             skeleton = mesh.skeleton;
@@ -35,6 +36,7 @@ public final class PreviewPoseOperationBenchmark {
             visible = new boolean[count];
             output = MemoryUtil.memAllocFloat(count * 16);
             bridge = new PreviewNativeVertices(mesh, config);
+            prepared = new PreviewPreparedPoseCandidate(skeleton);
             for (int bone = 0; bone < count; bone++) {
                 // Real hierarchy and inverse binds; controlled local poses isolate this operation.
                 local[bone] = new Matrix4f().translation(0.001f * (bone % 7), 0.002f, 0)
@@ -44,12 +46,14 @@ public final class PreviewPoseOperationBenchmark {
             }
         }
 
-        void compose(boolean nativePath) {
+        void compose(int implementation) {
             for (int bone = 0; bone < local.length; bone++) {
                 world[bone].set(local[bone]);
                 visible[bone] = skeleton.restVisible[bone];
             }
-            if (nativePath) {
+            if (implementation >= 2) {
+                prepared.compose(world, palette, visible, implementation == 3);
+            } else if (implementation == 1) {
                 bridge.compose(0, local.length, world, palette, visible);
             } else {
                 for (int bone : skeleton.order) {
@@ -86,10 +90,12 @@ public final class PreviewPoseOperationBenchmark {
 
         void run(int operation) {
             switch (operation) {
-                case 0 -> compose(false);
-                case 1 -> compose(true);
+                case 0 -> compose(0);
+                case 1 -> compose(1);
                 case 2 -> pack(false);
                 case 3 -> pack(true);
+                case 4 -> compose(2);
+                case 5 -> compose(3);
                 default -> throw new IllegalArgumentException("Unknown operation");
             }
         }
@@ -97,6 +103,7 @@ public final class PreviewPoseOperationBenchmark {
         @Override
         public void close() {
             bridge.close();
+            prepared.close();
             MemoryUtil.memFree(output);
         }
     }
@@ -104,7 +111,9 @@ public final class PreviewPoseOperationBenchmark {
     public static void main(String[] args) throws Exception {
         Path manifest = Path.of(args[0]).toAbsolutePath();
         var sample = JsonParser.parseString(Files.readString(manifest)).getAsJsonObject();
-        String[] operations = {"java_compose_cycle", "native_compose_cycle", "java_nio_pack", "candidate_direct_pack"};
+        System.load(Path.of(args[3]).toAbsolutePath().toString());
+        String[] operations = {"java_compose_cycle", "native_compose_cycle", "java_nio_pack",
+            "candidate_direct_pack", "candidate_prepared_cycle", "candidate_simd_cycle"};
         try (var report = new PrintWriter(Files.newBufferedWriter(Path.of(args[2])))) {
             report.println("kind,bones,operation,round,iterations,ns_per_operation");
             report.flush();
