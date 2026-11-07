@@ -111,3 +111,24 @@ Release构建、60帧实窗world/palette/可见性/GPU对照PASS，日志build-b
 | old.ysm | +88.21 | 🟢 +9.75% | -8.36 | 🔴 -0.57% |
 
 结果见[CPU](bones-v2/Benchmark-CPU.md)/[GPU](bones-v2/Benchmark-GPU.md)。总体仍未达标；新随机样本不能用于证明相对旧版本native的因果收益。四类native GPU骨骼CPU仍高于同轮Java（目录0.027/0.017、加密0.093/0.062、Figura0.034/0.016、旧版0.041/0.024 ms）；GPU Draw几乎一致，Present波动也影响总FPS。下一步先在真实模型窗口细分Java输入打包、JNI计算、Java输出回填耗时，再决定最小优化，避免仅凭总FPS继续猜测数学热点。最终多模型尚未开始。
+
+## P4：真实窗口分段诊断及world存储复用（bones-v3）
+
+bones-v2检查点20c383afc22075ce677115ed57fa8f59e643e0ed已推送。用户已授权后续提交默认执行，不再重复询问。新随机样本见[bones-v3/sample.json](bones-v3/sample.json)：ZZZ_Ellen_1、银狼Lv.999v1.2、小符玄、old.ysm。目录没有idle，静态检查原动画声明后配置walk；缺clip失败日志保留，未换样或修改资产。
+
+先用目录134骨骼真实可见窗口诊断3000次调用：Java pack0.001117 / JNI0.013829 / read0.002218 ms。第二次独立插桩把JNI分为buffers0.002554 / topology+world准备0.004358 / matrices0.008429 ms。诊断带计时开销，不作为正式FPS；日志profile-bones-directory-walk.log和profile-bones-native-walk.log。首次PowerShell未引用-D属性导致JVM参数错误，日志亦保留。
+
+最小改动仅复用预览私有instance已存在的double world矩阵，避免每帧world vector分配/初始化；保持实例mutex、独立存储、父先子后校验及子范围offset。没有新增缓存生命周期或公共API。所有临时Java/native计时已移除，JAR/DLL重新构建PASS；60帧实窗反向链/子范围/world/palette/可见性/实际GPU对照PASS（test-bones-v3.log）。
+
+| 样本 | CPU ΔFPS | CPU相对Java | GPU ΔFPS | GPU相对Java |
+|---|---:|---:|---:|---:|
+| ZZZ_Ellen_1 | -0.31 | 🔴 -0.03% | -184.34 | 🔴 -12.67% |
+| 银狼Lv.999v1.2 | +45.94 | 🟢 +5.54% | -179.39 | 🔴 -13.32% |
+| 小符玄 | -14.20 | 🔴 -4.00% | -22.39 | 🔴 -5.19% |
+| old.ysm | -46.90 | 🔴 -5.12% | -164.27 | 🔴 -13.34% |
+
+16组合全部完成，各3000聚焦采样帧、可见/提交1。完整[CPU](bones-v3/Benchmark-CPU.md)/[GPU](bones-v3/Benchmark-GPU.md)保留下降。仍未总体全绿。
+
+五轮原始数据分析保存build/preview/benchmark/bones-v3/round-analysis.json。目录Java GPU骨骼round0=0.0356、round4=0.0133 ms；native=0.0422/0.0313。加密Java=0.0547/0.0219、native=0.0845/0.0499。早期采样仍有热身变化，但后轮native差距未消失，不能仅归因JIT；所有帧保留，不追删慢帧。小符玄骨骼整体Java0.621/native0.775 ms，需继续检查脚本相关调用与组合次数。
+
+源码已确认YSM Java路径直接在父world上应用TRS，native路径先在Java生成local，再JNI做通用world组合；native多出一次矩阵组合和桥接。下一步针对实际调用频次与该结构差异定位，不再只从world分配推断总FPS收益。参考项目可以用于最小实现，但不移植游戏状态机、不改画质、不提前多模型。

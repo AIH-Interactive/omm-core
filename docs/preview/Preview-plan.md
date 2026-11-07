@@ -508,3 +508,7 @@ P2单线程骨骼顺序执行已构建并通过60帧实窗数值/shader对照；
 ### 2026-11-07 bones-v2随机轮次完成
 
 矩阵float输入直读/double累积实验及实窗正确性通过；新随机四类16组合全部完成，仍未总体全绿。完整记录在Benchmark-analysis.md和bones-v2，失败保留。下一步先细分骨骼桥接阶段实窗耗时，再优化；不提前最终多模型或恢复主M3–M6。
+
+### 2026-11-07 bones-v3诊断与复用实验完成
+
+真实窗口细分确认JNI内部占骨骼桥接主要耗时；最小复用预览私有instance的double world存储，移除全部临时插桩后构建及60帧实窗对照PASS。新随机四类16组合完整，仍未全绿，结果与失败见Benchmark-analysis.md/bones-v3。下一步分析骨骼实际调用频次及Java直接父world TRS与native local+compose的结构差异；最终多模型和主M3–M6尚未开始。

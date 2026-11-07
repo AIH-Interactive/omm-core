@@ -148,7 +148,9 @@ extern "C" JNIEXPORT void JNICALL Java_top_aihmc_omm_preview_PreviewNativeVertic
         if (visited != static_cast<size_t>(count)) {
             throw std::invalid_argument("preview skeleton order does not cover the requested range");
         }
-        std::vector<omm::model::Matrix4> world(count);
+        // This bridge owns a private instance and holds its mutex. Its existing
+        // double world matrices provide per-instance scratch without a frame allocation.
+        auto &pose = instance->pose;
         const auto compose_world = [&](size_t index) {
             omm::model::Matrix4 matrix;
             std::copy_n(local + index * 16, 16, matrix.begin());
@@ -156,17 +158,19 @@ extern "C" JNIEXPORT void JNICALL Java_top_aihmc_omm_preview_PreviewNativeVertic
                 throw std::invalid_argument("preview local pose is not finite affine");
             }
             const int32_t parent = parents[index + offset];
-            world[index] = parent < 0 ? matrix : multiply_preview(world[parent - offset], local + index * 16);
+            pose[index + offset].world =
+                parent < 0 ? matrix : multiply_preview(pose[parent].world, local + index * 16);
             visible[index] = visible[index] != 0 && (parent < 0 || visible[parent - offset] != 0);
         };
         const auto write_palette = [&](size_t index) {
-            auto palette = multiply_preview(world[index], inverse + (index + offset) * 16);
+            const auto &world = pose[index + offset].world;
+            auto palette = multiply_preview(world, inverse + (index + offset) * 16);
             if (!visible[index]) {
                 palette = {};
                 palette[15] = 1;
             }
             for (size_t value = 0; value < 16; ++value) {
-                world_output[index * 16 + value] = static_cast<float>(world[index][value]);
+                world_output[index * 16 + value] = static_cast<float>(world[value]);
                 palette_output[index * 16 + value] = static_cast<float>(palette[value]);
             }
         };

@@ -1,3 +1,11 @@
+## 当前有效交接（2026-11-07）：bones-v3 world复用实验完成，未全绿
+
+- 用户明确后续所有提交默认授权、不再询问；按阶段规则提交推送当前专项，保留其他M3修改。bones-v2检查点20c383afc22075ce677115ed57fa8f59e643e0ed已推送并核对远端main。
+- 新轮随机manifest/config位于build/preview/benchmark/bones-v3，manifest另存docs/preview/bones-v3。选中ZZZ_Ellen_1、银狼Lv.999v1.2.ysm、小符玄、old.ysm；同轮各路径共用样本。目录无idle，配置改用其声明walk；错误日志保留，不换样。
+- 临时实窗诊断：目录134骨骼，Java pack0.001117 / JNI0.013829 / read0.002218 ms。进一步JNI buffers0.002554 / topology+world准备0.004358 / matrices0.008429 ms（独立插桩运行，不当正式FPS）。日志profile-bones-directory-walk.log、profile-bones-native-walk.log。
+- 已移除所有临时Java/native插桩。唯一生产改动preview_vertices_jni.cpp：复用预览私有instance.pose的double world存储，仍持锁、每实例隔离、保留拓扑校验。build-bones-v3.log / build-bones-v3-java.log构建PASS，test-bones-v3.log的60帧实窗world/palette/可见性/shader对照PASS。JAR/DLL已重建，artifacts.json存哈希。
+- 本轮目录5395、加密59833、Figura44847、旧版75406均exit0；16组合完整，各3000聚焦帧、可见/提交1。CPU/GPU相对Java：目录-0.03%/-12.67%，加密+5.54%/-13.32%，Figura-4.00%/-5.19%，旧版-5.12%/-13.34%。当前无活动测试，未全绿，主M3–M6与最终多模型未开始。
+- 当前改动准备检查点提交推送。之后优先核对骨骼调用频次及Java父world直接TRS与native local+compose结构差异；五轮热身分析已保存，不能只把差距归因JIT。最后额度周剩57%，reset2次；<=2%优先使用授权reset。人工视觉MANUAL/PENDING。
 ## 当前有效交接（2026-11-07）：bones-v2 已完成，性能未达标
 
 - P2 已推送 a2d8629885ca8ad898589dcb19c533421afeaa37；用户已明确授权后续所有提交默认授权、不再询问；本轮八文件提交推送继续按阶段规则执行，保留其他M3修改。本轮未提交改动为 preview_vertices_jni.cpp 的 multiply_preview（直接消费float右矩阵，保留double累积及原运算顺序）、Sample-PreviewModels.py（随机新种子及旧版独立分层）、本轮报告。其他M3修改保留。
